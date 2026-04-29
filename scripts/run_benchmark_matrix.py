@@ -62,13 +62,37 @@ def _resolve_path(template: str, compute_type: str) -> str:
     return template.format(compute_type=compute_type)
 
 
+# Cells are emitted fastest-first so progress (and cells landing in
+# runs/results.jsonl) is visible within minutes rather than hours. The slowest
+# cells (large-v3 fp32 beam=5) run at the end. Total wall-clock unchanged;
+# only the order changes.
+_COMPUTE_RANK = {"int8": 0, "int8_float16": 1, "int8_float32": 2, "float16": 3, "float32": 4}
+_MODEL_RANK = {
+    "zero-shot-turbo": 0, "ft-turbo": 0,
+    "zero-shot-large-v3": 1, "ft-large-v3": 1,
+}
+
+
+def _cell_speed_key(cell: tuple) -> tuple:
+    model, ct, bs, t, _ts = cell
+    return (
+        _MODEL_RANK.get(model.get("name"), 9),
+        _COMPUTE_RANK.get(ct, 9),
+        bs,
+        t,
+    )
+
+
 def _iter_cells(cfg: dict) -> Iterable[tuple[dict, str, int, int, dict]]:
+    cells = []
     for model in cfg["models"]:
         for ct in cfg["compute_types"]:
             for bs in cfg["beam_sizes"]:
                 for t in cfg["cpu_threads"]:
                     for ts in cfg["test_sets"]:
-                        yield model, ct, bs, t, ts
+                        cells.append((model, ct, bs, t, ts))
+    cells.sort(key=_cell_speed_key)
+    return cells
 
 
 def main() -> None:
