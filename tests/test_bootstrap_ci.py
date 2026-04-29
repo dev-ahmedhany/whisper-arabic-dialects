@@ -47,8 +47,13 @@ def test_deterministic_under_same_seed():
 
 
 def test_different_seed_different_ci_bounds():
-    refs = [f"sample {i} word" for i in range(20)]
-    hyps = [f"sample {i} different" for i in range(20)]
+    # Heterogeneous per-utterance WERs so bootstrap resampling has variance to surface.
+    # Half the utterances are perfect, half are total mismatches.
+    refs = [f"reference token alpha beta {i}" for i in range(20)]
+    hyps = [
+        ref if i % 2 == 0 else "completely unrelated transcription output"
+        for i, ref in enumerate(refs)
+    ]
     a = bootstrap_wer_ci(refs, hyps, n_bootstrap=200, seed=1)
     b = bootstrap_wer_ci(refs, hyps, n_bootstrap=200, seed=2)
     assert a != b
