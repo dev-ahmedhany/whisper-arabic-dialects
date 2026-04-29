@@ -90,6 +90,15 @@ QLoRA recipe applied uniformly: 4-bit NF4 quantization + double quantization + b
 
 For zero-shot baselines we evaluate the CT2 (CTranslate2) conversions hosted on HuggingFace Hub: `Systran/faster-whisper-large-v3` (the official Systran conversion of OpenAI's `whisper-large-v3`) and `deepdml/faster-whisper-large-v3-turbo-ct2` (the most-downloaded community CT2 conversion of `whisper-large-v3-turbo`). Both are bit-identical to the OpenAI weights — only the on-disk format differs. `faster-whisper` does not auto-convert HF transformers checkpoints, so passing OpenAI's original repo IDs would fail at load time.
 
+**CT2 vs HF transformers reference validation.** As a methodology check we ran `whisper-large-v3-turbo` through the original `transformers.WhisperForConditionalGeneration` at fp32 on the same FLEURS MSA test set (50 samples), comparing to the CT2 / int8 pipeline used in the rest of the paper:
+
+| Backend | dtype | WER | RTF | TTFT-p95 | Peak RAM |
+|---|---|---|---|---|---|
+| transformers (reference) | float32 | 9.6% [6.9, 12.7] | 0.364 | 4412 ms | 4.2 GB |
+| CT2 (faster-whisper) | int8 | 10.4% [8.4, 12.4] | 0.307 | 3797 ms | 1.2 GB |
+
+The WER difference is ~0.8 percentage points with overlapping bootstrap CIs — within noise. **CT2 conversion + int8 weight quantization does not meaningfully shift WER** vs the OpenAI-reference HF transformers implementation on this dataset. CT2 is ~15% faster (CPU) and uses ~3× less RAM at the same task, justifying CT2 as the production-relevant inference path that the rest of the paper benchmarks.
+
 Five rules are enforced by the code:
 
 1. **Identical normalization.** Both reference and hypothesis are passed through `src.normalization.normalize_arabic` (version `v1`); the normalizer version is logged with every row.
