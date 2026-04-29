@@ -4,44 +4,61 @@ CPU-only inference benchmarking on the reproducibility platform: a Sapphire Rapi
 
 ## Prerequisites
 
-- GCP project, datasets and CT2 model variants on GCS or HF Hub.
-- `gcloud` authenticated.
-- Image `whisper-arabic-bench:latest` published to a registry your project can pull from (Artifact Registry or Docker Hub) — see Step 0.
+- `deploy/00_gcp_bootstrap.md` complete, datasets in GCS per `deploy/01_dataset_acquisition.md`.
+- For Phase 3b (fine-tuned models): CT2 model variants pushed to GCS or HF Hub (after Phase 2).
+- For **Phase 3a (zero-shot baselines, no training required)**: nothing else — `faster_whisper.WhisperModel("openai/whisper-large-v3-turbo")` auto-pulls pre-converted CT2 weights from HF Hub on first use.
 
-## Step 0 — Build and publish the benchmark image (one-time, from your laptop)
+## Phase 3a vs 3b
+
+The benchmark matrix splits naturally into two halves so you can fill the paper's
+zero-shot rows in parallel with training:
+
+| Sub-phase | Models | When to run | Tables it fills |
+|---|---|---|---|
+| **Phase 3a** | `zero-shot-large-v3`, `zero-shot-turbo` | Anytime after Phase 1 | ZS rows of Table 1 (and §4 Zero-Shot Baselines prose) |
+| **Phase 3b** | `ft-turbo`, `ft-large-v3` | After Phase 2 + CT2 conversion | FT rows of Table 1; all of Tables 2, 3, 4 |
+
+Same `c3-standard-8` instance, same image, same harness — just `--include-models` filters which rows of `runs/results.jsonl` get added.
+
+## Step 0 — Build and publish the benchmark image
+
+Two options depending on whether you want local Docker activity:
 
 ```bash
+# Option A — Cloud Build (server-side; preferred — no local Docker, no upload bandwidth)
+PROJECT=$(gcloud config get-value project)
+gcloud artifacts repositories create whisper \
+  --repository-format=docker \
+  --location=us-central1 \
+  --description="whisper-arabic benchmark images" 2>/dev/null || true
+gcloud builds submit \
+  --tag "us-central1-docker.pkg.dev/$PROJECT/whisper/bench:latest" .
+```
+
+```bash
+# Option B — local Docker push
 docker build -t whisper-arabic-bench:latest .
-
-# Option A — Docker Hub
-docker tag whisper-arabic-bench:latest <dockerhub-user>/whisper-arabic-bench:latest
-docker push <dockerhub-user>/whisper-arabic-bench:latest
-
-# Option B — GCP Artifact Registry
 gcloud auth configure-docker us-central1-docker.pkg.dev
+PROJECT=$(gcloud config get-value project)
 docker tag whisper-arabic-bench:latest \
-  us-central1-docker.pkg.dev/$(gcloud config get-value project)/whisper/bench:latest
-docker push us-central1-docker.pkg.dev/$(gcloud config get-value project)/whisper/bench:latest
+  us-central1-docker.pkg.dev/$PROJECT/whisper/bench:latest
+docker push us-central1-docker.pkg.dev/$PROJECT/whisper/bench:latest
 ```
 
 ## Step 1 — Provision `c3-standard-8`
 
 ```bash
-PROJECT=$(gcloud config get-value project)
-ZONE=us-central1-a
-INSTANCE=whisper-bench-gcp
-
-gcloud compute instances create "$INSTANCE" \
-  --zone="$ZONE" \
+gcloud compute instances create whisper-bench-gcp \
+  --zone=us-central1-a \
   --machine-type=c3-standard-8 \
   --image-family=debian-12 \
   --image-project=debian-cloud \
-  --boot-disk-size=200GB \
+  --boot-disk-size=100GB \
   --boot-disk-type=pd-balanced \
-  --metadata=enable-oslogin=TRUE
+  --scopes=cloud-platform
 ```
 
-Cost: ~$0.40/hr.
+Cost: ~$0.40/hr. `--scopes=cloud-platform` lets the VM pull from GCS and Artifact Registry without separate auth. 100 GB disk is plenty: 3.5 GB datasets + ~10 GB Docker layers + OS leaves ample headroom and stays well under the 510 GB SSD quota.
 
 ## Step 2 — Connect, install Docker, pull image
 
