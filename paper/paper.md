@@ -135,7 +135,27 @@ Establishes the starting point: the full Whisper family evaluated zero-shot thro
 - **Dialects degrade sharply.** Casablanca per-dialect WERs zero-shot: Levantine 37–40%, Egyptian 58–65%, Gulf 61%, Maghrebi 85%. Maghrebi is essentially failure-mode for both models — this is the dialect with the least Whisper training data and the most divergent phonology.
 - **Turbo is the production sweet spot before FT.** Across all dialects, turbo lags large-v3 by **2–7 WER points** but delivers ~1.7× lower RTF on the same hardware. The cost-per-audio-hour analysis (Table 6) picks turbo for Balanced production (RTF 0.31, $0.123/hr) and Cost-optimized ($0.121/hr) rows.
 - **`int8` vs `int8_fp32` is a wash.** Same WER (within bootstrap CI) and same RTF for both — the 16-bit-activation variant offers no measurable benefit at int8 weight quantization on c3-standard-8.
-- **TTFT is too slow for live captioning.** turbo/large-v3 TTFT_p95 is **3.5–7 seconds** — above the ~1 second threshold that real-time captioning needs. Section 10's "Real-time captioning" row is empty for the large-model family. We address this in §4.1 by extending the zero-shot sweep to the smaller Whisper variants (`tiny / base / small / medium`).
+- **TTFT is too slow for live captioning at large-model scale.** turbo/large-v3 TTFT_p95 is **3.5–7 seconds** — above the ~1 second threshold that real-time captioning needs. We address this in §4.1 by extending the zero-shot sweep to the smaller Whisper variants (`tiny / base / small / medium`).
+
+### 4.1 Smaller Whisper Variants (Zero-Shot)
+
+We additionally evaluate `whisper-tiny` (39M), `whisper-base` (74M), and `whisper-small` (244M) zero-shot on the same benchmark matrix to cover the cost/latency end of the spectrum. (`medium` cells were still in flight at draft time.) Results from int8 / beam=1 / threads=4 / 100-sample cells on `c3-standard-8`:
+
+| Model | MSA WER | Egyptian WER | Levantine WER | Gulf WER | Maghrebi WER | RTF (MSA) | TTFT p95 (MSA) |
+|---|---|---|---|---|---|---|---|
+| tiny (39M) | 66.6% | 94.4% | 84.0% | 89.8% | 97.1% | 0.030 | **764 ms** |
+| base (74M) | 51.2% | 90.8% | 75.2% | 85.4% | 95.5% | 0.050 | **617 ms** |
+| small (244M) | 27.4% | 77.0% | – | 72.1% | – | 0.115 | 1643 ms |
+| turbo (809M) | 10.4% | 65.0% | 40.3% | 61.1% | 84.9% | 0.307 | 3797 ms |
+| large-v3 (1.55B) | 8.5% | 57.7% | 37.1% | – | – | 0.514 | 7531 ms |
+
+Three findings shape the production recommendation table (Table 6):
+
+1. **`tiny` is essentially unusable on Arabic.** Even on the easiest condition (FLEURS MSA) WER is 66.6%; on dialects it's 84–97%. The MSA WER is below the matrix-wide median, so it technically passes the WER floor in our recommendation logic, but a deployment engineer should treat tiny as not-fit-for-purpose.
+2. **`base` opens up the live-captioning use case.** TTFT_p95 = 617 ms on MSA (well under 1 s), RTF = 0.05, RAM < 200 MB at int8, and MSA WER 51.2% is usable for low-stakes captioning where missing words is acceptable. Cost: **$0.020 per hour of audio transcribed** — 6× cheaper than turbo.
+3. **`small` is the natural Arabic-MSA workhorse zero-shot.** 27.4% MSA WER is a real production-grade number, RTF 0.12, ~500 MB RAM. After fine-tuning, this is likely where the cost-optimized deployment lives.
+
+The smaller models do **not** improve the dialect numbers — `base` on Maghrebi is 95.5% (worse than turbo's 84.9%). For dialect-heavy deployments, larger models remain the only viable zero-shot option.
 
 ### Table 1 — Quality ceiling per model (best WER achievable on CPU, fp32 / beam 5 / 8 threads)
 
@@ -208,11 +228,11 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 
 | Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/audio-hr |
 |---|---|---|---|---|---|---|---|---|---|
-| Real-time captioning | TTFT-p95 < 1s, WER < median | - | - | - | - | - | - | - | - |
-| Batch transcription (min WER) | min WER | zero-shot-large-v3 | int8 | 1 | 4 | gcp-c3-standard-8 | 8.5 [6.6, 10.4] | 0.514 | $0.206/audio-hr |
-| Edge deployment | RAM < 1 GB, WER < median | - | - | - | - | - | - | - | - |
+| Real-time captioning | TTFT-p95 < 1s, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
+| Batch transcription (min WER) | min WER | zero-shot-large-v3 | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 8.5 [6.6, 10.4] | 0.504 | $0.202/audio-hr |
+| Edge deployment | RAM < 1 GB, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
 | Balanced production | RTF < 0.5, max accuracy | zero-shot-turbo | int8 | 1 | 4 | gcp-c3-standard-8 | 10.4 [8.4, 12.4] | 0.307 | $0.123/audio-hr |
-| Cost-optimized | min $/audio-hr, WER < median | zero-shot-turbo | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 10.4 [8.4, 12.4] | 0.302 | $0.121/audio-hr |
+| Cost-optimized | min $/audio-hr, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
 
 ## 11. Error Analysis
 
