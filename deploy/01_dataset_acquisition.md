@@ -17,12 +17,14 @@ gcloud compute instances create whisper-dataprep \
   --machine-type=e2-standard-4 \
   --image-family=debian-12 \
   --image-project=debian-cloud \
-  --boot-disk-size=500GB \
+  --boot-disk-size=100GB \
   --boot-disk-type=pd-balanced \
   --scopes=cloud-platform
 ```
 
 `e2-standard-4` is ~$0.13/hr — cheapest sensible spec for an I/O-bound prep job. `--scopes=cloud-platform` gives the VM ambient credentials for `gsutil` so you don't need a separate service-account dance to write to your bucket.
+
+**Disk sizing:** with the dialect-balanced mix in `configs/dataset_mix.yaml` (no SADA, no QASR), total decoded audio is well under 10 GB. 100 GB pd-balanced leaves ample headroom for the OS, the HF datasets cache, and a few GB of safety margin — and crucially **leaves SSD quota free for the Phase 2 L4 training instance (150 GB) and Phase 3 `c3-standard-8` benchmark instance (200 GB)**, both also pd-balanced in the same region. Default per-region SSD quota in `us-central1` is 500 GB, so over-sizing the prep VM cascades into Phase 2/3 instance-creation failures.
 
 SSH in:
 
