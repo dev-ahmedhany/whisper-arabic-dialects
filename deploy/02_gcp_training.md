@@ -98,9 +98,20 @@ for q in float32 float16 int8_float32 int8_float16 int8; do
 done
 ```
 
-## Step 7 — Repeat for large-v3
+## Step 7 — Repeat for the other three model sizes
 
-Only do this after the H1 milestone gate has been evaluated (see paper §6):
+The full FT plan covers four sizes: turbo (primary, H1), large-v3 (stretch, H1
+quality reference), plus medium (cost-optimized candidate) and small (edge-deployment
+candidate). Only train large-v3 after the H1 milestone gate has been evaluated
+(see paper §6); medium and small can be trained in parallel with large-v3.
+
+```bash
+bash scripts/run_full_train.sh medium     # ~10-12h on L4
+bash scripts/run_full_train.sh small      # ~6-8h on L4
+bash scripts/run_full_train.sh large-v3   # ~24-30h on L4
+```
+
+For each, follow the same merge → CT2 sweep → GCS upload pattern:
 
 ```bash
 bash scripts/run_full_train.sh large-v3
@@ -121,4 +132,13 @@ gcloud workbench instances stop "$INSTANCE" --location="$ZONE"
 
 ## Cost ceiling
 
-Approximate spend: ~$15 for turbo training, ~$25 for large-v3 training, ~$10 buffer for re-runs. Total under $50.
+Approximate spend per training run on `g2-standard-16` ($0.85/hr):
+
+| Model | Wall-clock | GCP cost |
+|---|---|---|
+| small (244M) | ~6-8h | ~$5-7 |
+| medium (769M) | ~10-12h | ~$8-10 |
+| turbo (809M) | ~12-18h | ~$10-15 |
+| large-v3 (1.55B, with grad checkpointing) | ~24-30h | ~$20-25 |
+
+Total all four: ~$45-55. Plus ~$10 buffer for re-runs. Total under $65.

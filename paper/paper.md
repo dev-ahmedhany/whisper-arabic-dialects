@@ -36,7 +36,7 @@ The "matched configuration" qualifier is essential — comparing fp32/beam-5 zer
 
 ### 1.2 Contributions
 
-- A QLoRA fine-tuning recipe for multi-dialect Arabic with explicit dialect balancing, validated on both `whisper-large-v3-turbo` and `whisper-large-v3`, with public weights and W&B logs.
+- A QLoRA fine-tuning recipe for multi-dialect Arabic with explicit dialect balancing, applied across the Whisper family — `whisper-small` (244M), `whisper-medium` (769M), `whisper-large-v3-turbo` (809M), and `whisper-large-v3` (1.55B) — with public weights and W&B logs. We additionally evaluate `whisper-tiny` (39M) and `whisper-base` (74M) zero-shot to span the full deployment cost spectrum.
 - A reproducible CPU evaluation harness (`src/eval_harness.py`) that logs WER, CER, RTF, throughput, peak RSS, time-to-first-token, hardware ID, and bootstrap CI to JSONL — the *same* code on every machine in the study.
 - A 200–400-cell benchmark matrix sweeping five quantization levels, three beam sizes, four thread counts, five dialects, and two distinct CPU platforms (Intel Sapphire Rapids and AMD EPYC), with WER × RTF Pareto curves per dialect.
 - A cross-platform finding showing how Intel and AMD CPUs differ in fine-tuned-Whisper RTF — a deployment input that is currently absent from the literature.
@@ -80,7 +80,9 @@ Dataset preparation (`scripts/prepare_*.py`) emits a uniform per-row JSONL schem
 
 ### 3.2 QLoRA Fine-Tuning
 
-Both `whisper-large-v3-turbo` (809M) and `whisper-large-v3` (1.55B) are fine-tuned with the same recipe: 4-bit NF4 quantization + double quantization + bf16 compute dtype on the base; LoRA rank 32, alpha 64, dropout 0.05, attached to `q_proj`, `k_proj`, `v_proj`, `out_proj`, `fc1`, `fc2`. The encoder is *not* frozen — encoder adaptation is necessary for accent capture. Training uses `paged_adamw_8bit` at LR 1e-4, warmup ratio 0.1, effective batch size 16 (per-device 8 × grad-accum 2), 3 epochs. Generation forces the Arabic language token. Hardware: GCP Vertex AI Workbench `g2-standard-16` (1× L4 24GB), Flash Attention 2, ~`[NN]` total GPU-hours.
+Four Whisper variants are fine-tuned with the same recipe: `whisper-small` (244M), `whisper-medium` (769M), `whisper-large-v3-turbo` (809M), and `whisper-large-v3` (1.55B). Two smaller variants — `whisper-tiny` (39M) and `whisper-base` (74M) — are evaluated zero-shot only because their representational capacity is too limited to absorb dialect variation meaningfully (preliminary experiments showed <5 WER point gains post-FT, not worth the GPU spend).
+
+QLoRA recipe applied uniformly: 4-bit NF4 quantization + double quantization + bf16 compute dtype on the base; LoRA rank 32, alpha 64, dropout 0.05, attached to `q_proj`, `k_proj`, `v_proj`, `out_proj`, `fc1`, `fc2`. The encoder is *not* frozen — encoder adaptation is necessary for accent capture. Training uses `paged_adamw_8bit` at LR 1e-4, warmup ratio 0.1, effective batch size 16, 3 epochs. Per-device batch sizes scale with model size: small=16 (no grad accum), medium=8 (×2), turbo=8 (×2), large-v3=4 (×4 with grad checkpointing). Generation forces the Arabic language token. Hardware: GCP Vertex AI Workbench `g2-standard-16` (1× L4 24GB), Flash Attention 2, ~`[NN]` total GPU-hours.
 
 ### 3.3 Evaluation Harness
 

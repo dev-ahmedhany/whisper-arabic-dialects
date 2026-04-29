@@ -45,7 +45,7 @@ Follow the runbooks in order. Every command used to produce the paper's results 
 5. **`deploy/04_hetzner_benchmark.md`** — provision a Hetzner CX53 and replay the benchmark for cross-platform validation.
 6. **`deploy/05_artifacts_publishing.md`** — push models to HF Hub, make the W&B project public, push code.
 
-Approximate compute spend: ~$115 on GCP (training + benchmarking) plus ~$2 on Hetzner (cross-platform validation).
+Approximate compute spend: ~$120 on GCP (4 fine-tuning runs across small / medium / turbo / large-v3 + benchmarking sweep) plus ~$2 on Hetzner (cross-platform validation).
 
 ## Citing
 

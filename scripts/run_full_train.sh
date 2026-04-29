@@ -8,14 +8,12 @@ cd "$(dirname "$0")/.."
 
 MODEL="${1:-turbo}"
 case "$MODEL" in
-  turbo)
-    CONFIG="configs/train_turbo.yaml"
-    ;;
-  large-v3)
-    CONFIG="configs/train_large_v3.yaml"
-    ;;
+  turbo)    CONFIG="configs/train_turbo.yaml" ;;
+  large-v3) CONFIG="configs/train_large_v3.yaml" ;;
+  medium)   CONFIG="configs/train_medium.yaml" ;;
+  small)    CONFIG="configs/train_small.yaml" ;;
   *)
-    echo "usage: $0 [turbo|large-v3]"
+    echo "usage: $0 [turbo|large-v3|medium|small]"
     exit 1
     ;;
 esac

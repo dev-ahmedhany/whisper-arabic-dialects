@@ -1,0 +1,39 @@
+# QLoRA fine-tune of whisper-medium (769M) on dialect-balanced Arabic.
+# Cost-optimized-deployment-oriented: ~1.5 GB RAM at int8, RTF ~0.3 on c3-standard-8
+# expected. Likely the cost-optimized winner in paper Table 6 once FT.
+
+model_name: "openai/whisper-medium"
+language: "arabic"
+task: "transcribe"
+attn_implementation: "flash_attention_2"
+
+train_jsonl: "test_sets/train.jsonl"
+val_jsonl: "test_sets/val.jsonl"
+
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target_modules: ["q_proj", "v_proj", "k_proj", "out_proj", "fc1", "fc2"]
+
+# Optimization — medium fits L4 with batch 8 + grad_accum 2 = effective batch 16
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+warmup_ratio: 0.1
+num_train_epochs: 3
+optim: "paged_adamw_8bit"
+gradient_checkpointing: false
+
+eval_steps: 500
+save_steps: 500
+save_total_limit: 3
+logging_steps: 25
+generation_max_length: 225
+seed: 42
+
+output_dir: "checkpoints/whisper-medium-ar-lora"
+run_name: "whisper-medium-ar-lora-v1"
+report_to: ["tensorboard", "wandb"]
+wandb_project: "whisper-arabic-ft"
+wandb_tags: ["medium", "qlora", "cost-optimized-candidate"]
