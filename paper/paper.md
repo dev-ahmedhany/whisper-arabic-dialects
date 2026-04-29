@@ -84,7 +84,11 @@ Both `whisper-large-v3-turbo` (809M) and `whisper-large-v3` (1.55B) are fine-tun
 
 ### 3.3 Evaluation Harness
 
-`src/eval_harness.py` is the single point through which every WER number in this paper passes. It accepts an `EvalConfig` (model path, compute type, beam size, CPU threads, language) and a test-set JSONL, and produces an `EvalResult` JSONL row containing WER, CER, RTF, throughput, peak RSS, sample count, hardware ID, platform label, normalizer version, and git commit. Five rules are enforced by the code:
+`src/eval_harness.py` is the single point through which every WER number in this paper passes. It accepts an `EvalConfig` (model path, compute type, beam size, CPU threads, language) and a test-set JSONL, and produces an `EvalResult` JSONL row containing WER, CER, RTF, throughput, peak RSS, sample count, hardware ID, platform label, normalizer version, and git commit.
+
+For zero-shot baselines we evaluate the CT2 (CTranslate2) conversions hosted on HuggingFace Hub: `Systran/faster-whisper-large-v3` (the official Systran conversion of OpenAI's `whisper-large-v3`) and `deepdml/faster-whisper-large-v3-turbo-ct2` (the most-downloaded community CT2 conversion of `whisper-large-v3-turbo`). Both are bit-identical to the OpenAI weights — only the on-disk format differs. `faster-whisper` does not auto-convert HF transformers checkpoints, so passing OpenAI's original repo IDs would fail at load time.
+
+Five rules are enforced by the code:
 
 1. **Identical normalization.** Both reference and hypothesis are passed through `src.normalization.normalize_arabic` (version `v1`); the normalizer version is logged with every row.
 2. **Immediate JSONL logging.** No reconstruction from in-memory state — the row is appended to `runs/results.jsonl` as soon as the run completes.

@@ -6,7 +6,7 @@ CPU-only inference benchmarking on the reproducibility platform: a Sapphire Rapi
 
 - `deploy/00_gcp_bootstrap.md` complete, datasets in GCS per `deploy/01_dataset_acquisition.md`.
 - For Phase 3b (fine-tuned models): CT2 model variants pushed to GCS or HF Hub (after Phase 2).
-- For **Phase 3a (zero-shot baselines, no training required)**: nothing else — `faster_whisper.WhisperModel("openai/whisper-large-v3-turbo")` auto-pulls pre-converted CT2 weights from HF Hub on first use.
+- For **Phase 3a (zero-shot baselines, no training required)**: the matrix configs already point at community CT2 conversions on HF Hub — `Systran/faster-whisper-large-v3` and `deepdml/faster-whisper-large-v3-turbo-ct2`. `faster-whisper` does NOT auto-convert HF transformers checkpoints (`openai/whisper-*`); it expects pre-converted CT2 weights with `model.bin`. The two CT2 mirrors above are bit-identical to the OpenAI originals, just in faster-whisper's required format.
 
 ## Phase 3a vs 3b
 
