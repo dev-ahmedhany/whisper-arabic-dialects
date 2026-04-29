@@ -226,13 +226,13 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 
 <!-- INSERT: table_6 -->
 
-| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/audio-hr |
-|---|---|---|---|---|---|---|---|---|---|
-| Real-time captioning | TTFT-p95 < 1s, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
-| Batch transcription (min WER) | min WER | zero-shot-large-v3 | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 8.5 [6.6, 10.4] | 0.504 | $0.202/audio-hr |
-| Edge deployment | RAM < 1 GB, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
-| Balanced production | RTF < 0.5, max accuracy | zero-shot-turbo | int8 | 1 | 4 | gcp-c3-standard-8 | 10.4 [8.4, 12.4] | 0.307 | $0.123/audio-hr |
-| Cost-optimized | min $/audio-hr, WER < median | zero-shot-base | int8 | 1 | 4 | gcp-c3-standard-8 | 51.2 [47.6, 55.1] | 0.050 | $0.020/audio-hr |
+| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | Dialects covered | Avg WER | Avg RTF | $/audio-hr |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Real-time captioning | avg TTFT-p95 < 1s, avg WER < median | - | - | - | - | - | - | - | - | - |
+| Batch transcription (min avg WER) | min avg WER | zero-shot-large-v3 | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 49.4 [45.4, 53.5] | 1.288 | $0.515/audio-hr |
+| Edge deployment | RAM < 1 GB, avg WER < median | - | - | - | - | - | - | - | - | - |
+| Balanced production | avg RTF < 0.5, max accuracy | zero-shot-small | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 64.5 [60.7, 68.5] | 0.364 | $0.145/audio-hr |
+| Cost-optimized | min $/audio-hr, avg WER < median | zero-shot-turbo | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 52.3 [48.7, 56.3] | 0.818 | $0.327/audio-hr |
 
 ## 11. Error Analysis
 

@@ -196,63 +196,88 @@ def _add_cost_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def table_6_recommendations(df: pd.DataFrame) -> str:
-    """Five rows, each picking one cell from the matrix per a deployment constraint.
+def _aggregate_across_dialects(df: pd.DataFrame, min_dialects: int = 4) -> pd.DataFrame:
+    """Average per-cell metrics across dialects per (model × compute × beam × threads × platform).
 
-    The "balanced" and "cost-optimized" rows are the headline answers to the
-    paper's question: what config should a practitioner deploy? Constraints come
-    from plan.md §Production Deployment Recommendation.
+    A production deployment serves ALL dialects, not just MSA. Selecting
+    Table 6 rows on single-dialect WER (typically MSA, the easiest condition)
+    over-promises. Instead we aggregate: group by config, average WER /
+    RTF / TTFT / memory across the dialects the group has, then drop groups
+    that don't have at least `min_dialects` dialects represented (so we
+    don't compare a partial 2-dialect config to a full 5-dialect one).
+    """
+    keys = ["cfg_model_name", "cfg_compute_type", "cfg_beam_size",
+            "cfg_cpu_threads", "platform_label"]
+    agg = df.groupby(keys).agg(
+        wer=("wer", "mean"),
+        wer_ci_lo=("wer_ci_lo", "mean"),
+        wer_ci_hi=("wer_ci_hi", "mean"),
+        rtf=("rtf", "mean"),
+        peak_memory_mb=("peak_memory_mb", "mean"),
+        ttft_ms_p95=("ttft_ms_p95", "mean") if "ttft_ms_p95" in df.columns
+                    else ("rtf", "mean"),  # fallback if no TTFT
+        hourly_usd=("hourly_usd", "first"),
+        n_dialects=("dialect", "nunique"),
+    ).reset_index()
+    agg["cost_per_audio_hour"] = agg["hourly_usd"] * agg["rtf"]
+    agg = agg[agg["n_dialects"] >= min_dialects]
+    return agg
+
+
+def table_6_recommendations(df: pd.DataFrame) -> str:
+    """Five rows, each picking one config from the matrix per a deployment constraint.
+
+    All metrics are AVERAGED across the dialects in the group — a production
+    deployment must serve every dialect, so a recommendation that wins on
+    MSA alone but fails on Maghrebi is misleading.
     """
     if df.empty:
         return "_(no data yet)_"
     df = _add_cost_columns(df)
-    median_wer = float(df["wer"].median())
+    agg = _aggregate_across_dialects(df, min_dialects=4)
+    if agg.empty:
+        return "_(no config has been benchmarked across enough dialects yet)_"
+    median_wer = float(agg["wer"].median())
     rows = []
 
     def _row(label: str, sub: pd.DataFrame, constraint: str) -> str:
         if sub.empty:
-            return f"| {label} | {constraint} | - | - | - | - | - | - | - | - |"
+            return f"| {label} | {constraint} | - | - | - | - | - | - | - | - | - |"
         r = sub.iloc[0]
         cost_str = f"${r['cost_per_audio_hour']:.3f}/audio-hr" if r["hourly_usd"] > 0 else "-"
+        wer_str = f"{r['wer']*100:.1f} [{r['wer_ci_lo']*100:.1f}, {r['wer_ci_hi']*100:.1f}]"
         return (
             f"| {label} | {constraint} | {r['cfg_model_name']} | {r['cfg_compute_type']} | "
             f"{int(r['cfg_beam_size'])} | {int(r['cfg_cpu_threads'])} | {r['platform_label']} | "
-            f"{_fmt_wer(r)} | {r['rtf']:.3f} | {cost_str} |"
+            f"{int(r['n_dialects'])} | {wer_str} | {r['rtf']:.3f} | {cost_str} |"
         )
 
-    # 1. Real-time captioning: tail latency is what matters (one bad utterance ruins
-    #    the live UX). Use ttft_ms_p95 < 1000 ms as the constraint, plus a quality
-    #    floor so we don't pick a fast-but-useless config.
-    if "ttft_ms_p95" in df.columns:
-        realtime = df[(df["ttft_ms_p95"] < 1000) & (df["wer"] < median_wer)] \
-            .sort_values("ttft_ms_p95").head(1)
-        rows.append(_row("Real-time captioning", realtime, "TTFT-p95 < 1s, WER < median"))
-    else:
-        # Fallback for older runs.jsonl rows without TTFT.
-        realtime = df[(df["rtf"] < 0.3) & (df["wer"] < median_wer)].sort_values("rtf").head(1)
-        rows.append(_row("Real-time captioning", realtime, "RTF < 0.3, WER < median (no TTFT)"))
+    # 1. Real-time captioning: tail latency matters across the whole dialect set.
+    realtime = agg[(agg["ttft_ms_p95"] < 1000) & (agg["wer"] < median_wer)] \
+        .sort_values("ttft_ms_p95").head(1)
+    rows.append(_row("Real-time captioning", realtime, "avg TTFT-p95 < 1s, avg WER < median"))
 
     # 2. Batch transcription, accuracy is everything.
-    batch_min = df.sort_values("wer").head(1)
-    rows.append(_row("Batch transcription (min WER)", batch_min, "min WER"))
+    batch_min = agg.sort_values("wer").head(1)
+    rows.append(_row("Batch transcription (min avg WER)", batch_min, "min avg WER"))
 
     # 3. Edge: smallest memory footprint at a quality floor.
-    edge = df[(df["peak_memory_mb"] < 1024) & (df["wer"] < median_wer)] \
+    edge = agg[(agg["peak_memory_mb"] < 1024) & (agg["wer"] < median_wer)] \
         .sort_values("peak_memory_mb").head(1)
-    rows.append(_row("Edge deployment", edge, "RAM < 1 GB, WER < median"))
+    rows.append(_row("Edge deployment", edge, "RAM < 1 GB, avg WER < median"))
 
-    # 4. Balanced production: best WER under a usable latency budget.
-    balanced = df[df["rtf"] < 0.5].sort_values("wer").head(1)
-    rows.append(_row("Balanced production", balanced, "RTF < 0.5, max accuracy"))
+    # 4. Balanced production: best avg WER under a usable latency budget.
+    balanced = agg[agg["rtf"] < 0.5].sort_values("wer").head(1)
+    rows.append(_row("Balanced production", balanced, "avg RTF < 0.5, max accuracy"))
 
-    # 5. Cost-optimized: minimize $/audio-hour subject to a quality floor (else trivially
-    #    picks the cheapest+fastest, which may be unusable).
-    cost_opt = df[df["wer"] < median_wer].sort_values("cost_per_audio_hour").head(1)
-    rows.append(_row("Cost-optimized", cost_opt, "min $/audio-hr, WER < median"))
+    # 5. Cost-optimized: minimize $/audio-hour subject to a quality floor.
+    cost_opt = agg[agg["wer"] < median_wer].sort_values("cost_per_audio_hour").head(1)
+    rows.append(_row("Cost-optimized", cost_opt, "min $/audio-hr, avg WER < median"))
 
     header = (
-        "| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/audio-hr |\n"
-        "|---|---|---|---|---|---|---|---|---|---|"
+        "| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | "
+        "Dialects covered | Avg WER | Avg RTF | $/audio-hr |\n"
+        "|---|---|---|---|---|---|---|---|---|---|---|"
     )
     return header + "\n" + "\n".join(rows)
 
