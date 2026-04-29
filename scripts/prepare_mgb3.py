@@ -1,73 +1,38 @@
-"""Prepare MGB-3 (Egyptian) → JSONL.
+"""Prepare MGB-3 (Egyptian) → JSONL via HuggingFace Hub.
 
-MGB-3 is gated. You must register at the MGB challenge website
-(https://arabicspeech.org/mgb3/) and download:
-  - audio/wav/{split}/<utt>.wav
-  - text/{split}/text         (Kaldi-style: "<utt-id> <transcription>")
+Uses the public mirror at `ArabicSpeech/MGB-3` (no registration needed). The dataset
+is entirely Egyptian Arabic by design, so dialect is hardcoded to "egyptian".
 
-This script consumes those local files and emits the standard JSONL schema.
+Schema on HF Hub: { id, audio, text }.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
-import soundfile as sf
-
-
-def parse_kaldi_text(text_file: Path) -> dict[str, str]:
-    out: dict[str, str] = {}
-    for line in text_file.read_text().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split(maxsplit=1)
-        if len(parts) != 2:
-            continue
-        utt_id, ref = parts
-        out[utt_id] = ref
-    return out
+from scripts._hf_audio_to_jsonl import stream_to_jsonl
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--audio-dir", type=Path, required=True,
-                   help="dir containing <utt-id>.wav files")
-    p.add_argument("--text-file", type=Path, required=True,
-                   help="Kaldi-style text file: '<utt-id> <transcription>' per line")
-    p.add_argument("--dialect", default="egyptian")
+    p.add_argument("--dataset-id", default="ArabicSpeech/MGB-3")
+    p.add_argument("--split", default="train", choices=["train", "validation", "test"])
     p.add_argument("--out", type=Path, default=Path("test_sets/mgb3_egyptian_train.jsonl"))
-    p.add_argument("--source-tag", default="mgb3")
+    p.add_argument("--audio-dir", type=Path, default=Path("audio/mgb3"))
+    p.add_argument("--max-samples", type=int, default=None)
     args = p.parse_args()
 
-    transcripts = parse_kaldi_text(args.text_file)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-
-    n_written = 0
-    with args.out.open("w") as out:
-        for utt_id, ref in transcripts.items():
-            wav = args.audio_dir / f"{utt_id}.wav"
-            if not wav.exists():
-                continue
-            info = sf.info(str(wav))
-            duration_s = float(info.frames) / float(info.samplerate)
-            out.write(
-                json.dumps(
-                    {
-                        "audio": str(wav.resolve()),
-                        "reference": ref.strip(),
-                        "dialect": args.dialect,
-                        "source_dataset": args.source_tag,
-                        "duration_s": duration_s,
-                    },
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
-            n_written += 1
-    print(f"wrote {n_written} rows to {args.out}")
+    n = stream_to_jsonl(
+        dataset_id=args.dataset_id,
+        split=args.split,
+        output_jsonl=args.out,
+        audio_dir=args.audio_dir,
+        text_fn=lambda r: r.get("text") or r.get("transcription") or r.get("sentence", ""),
+        dialect="egyptian",
+        max_samples=args.max_samples,
+    )
+    print(f"wrote {n} rows to {args.out}")
 
 
 if __name__ == "__main__":

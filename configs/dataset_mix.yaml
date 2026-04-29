@@ -1,6 +1,15 @@
 # Dialect-balanced training mix. Hours per dialect should sit within ~2× of each other.
 # `sources` are paths to per-dataset JSONL files produced by scripts/prepare_*.py.
 # Test sources are NOT mixed into train; data_prep.py copies them through verbatim.
+#
+# All sources are accessible via HuggingFace Hub without external registration:
+#   common_voice_17 (mozilla-foundation/common_voice_17_0)
+#   mgb3            (ArabicSpeech/MGB-3)
+#   mgb5            (ArabicSpeech/MGB-5)
+#   masc            (pain/MASC)
+#   sada            (MBZUAI/sada)
+#   fleurs          (google/fleurs)
+#   casablanca      (MBZUAI-Paris/Casablanca)
 
 train:
   msa:
@@ -19,12 +28,10 @@ train:
     hours: 9
     sources:
       - "test_sets/masc_levantine_train.jsonl"
-      - "test_sets/qasr_levantine_train.jsonl"
   gulf:
     hours: 9
     sources:
       - "test_sets/sada_saudi_train.jsonl"
-      - "test_sets/qasr_gulf_train.jsonl"
 
 test:
   msa:

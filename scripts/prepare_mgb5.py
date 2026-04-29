@@ -1,7 +1,9 @@
-"""Prepare MGB-5 (Moroccan) → JSONL. Same Kaldi-style ingestion as MGB-3.
+"""Prepare MGB-5 (Moroccan / Maghrebi) → JSONL via HuggingFace Hub.
 
-Gated; register at https://arabicspeech.org/mgb5/ and pass --audio-dir and --text-file.
-This is a thin wrapper over prepare_mgb3 with Moroccan defaults.
+Uses the public mirror at `ArabicSpeech/MGB-5` (no registration needed). Entirely
+Moroccan Arabic by design, so dialect is hardcoded to "maghrebi".
+
+Schema on HF Hub: { id, audio, text }.
 """
 
 from __future__ import annotations
@@ -9,44 +11,27 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from scripts.prepare_mgb3 import parse_kaldi_text
-import json
-import soundfile as sf
+from scripts._hf_audio_to_jsonl import stream_to_jsonl
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--audio-dir", type=Path, required=True)
-    p.add_argument("--text-file", type=Path, required=True)
-    p.add_argument("--dialect", default="maghrebi")
+    p.add_argument("--dataset-id", default="ArabicSpeech/MGB-5")
+    p.add_argument("--split", default="train", choices=["train", "validation", "test"])
     p.add_argument("--out", type=Path, default=Path("test_sets/mgb5_moroccan_train.jsonl"))
-    p.add_argument("--source-tag", default="mgb5")
+    p.add_argument("--audio-dir", type=Path, default=Path("audio/mgb5"))
+    p.add_argument("--max-samples", type=int, default=None)
     args = p.parse_args()
 
-    transcripts = parse_kaldi_text(args.text_file)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    n = 0
-    with args.out.open("w") as out:
-        for utt_id, ref in transcripts.items():
-            wav = args.audio_dir / f"{utt_id}.wav"
-            if not wav.exists():
-                continue
-            info = sf.info(str(wav))
-            duration_s = float(info.frames) / float(info.samplerate)
-            out.write(
-                json.dumps(
-                    {
-                        "audio": str(wav.resolve()),
-                        "reference": ref.strip(),
-                        "dialect": args.dialect,
-                        "source_dataset": args.source_tag,
-                        "duration_s": duration_s,
-                    },
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
-            n += 1
+    n = stream_to_jsonl(
+        dataset_id=args.dataset_id,
+        split=args.split,
+        output_jsonl=args.out,
+        audio_dir=args.audio_dir,
+        text_fn=lambda r: r.get("text") or r.get("transcription") or r.get("sentence", ""),
+        dialect="maghrebi",
+        max_samples=args.max_samples,
+    )
     print(f"wrote {n} rows to {args.out}")
 
 

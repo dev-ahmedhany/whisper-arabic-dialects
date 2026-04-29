@@ -71,8 +71,8 @@ Training mix targets ~50 hours, balanced so no dialect dominates more than ~2× 
 | train | Common Voice 17 (ar) | MSA-leaning | ~12 |
 | train | MGB-3 | Egyptian | ~10 |
 | train | MGB-5 | Moroccan | ~10 |
-| train | MASC + QASR (filtered) | Levantine | ~9 |
-| train | SADA + QASR (filtered) | Gulf | ~9 |
+| train | MASC | Levantine | ~9 |
+| train | SADA | Gulf | ~9 |
 | test  | FLEURS (ar) | MSA, dialect-tagged | full split |
 | test  | Casablanca (per-dialect) | MSA, EG, LV, GLF, MAG | 300–500 utterances per dialect |
 
@@ -201,7 +201,7 @@ A comparison of fine-tuned vs zero-shot error distributions on the same utteranc
 
 **What the matrix can and cannot answer.** The matrix answers questions about deployment-relevant configurations of `large-v3` family models on commodity CPU. It does not say anything about smaller Whisper variants (tiny / small / medium), about fine-tuning recipes other than QLoRA (full FT, prefix-tuning, etc.), or about the architectural ceiling of Whisper for low-resource Arabic dialects beyond the five covered here.
 
-**Dataset coverage.** Sudanese, Iraqi, Yemeni, and Mauritanian dialects are not separately represented in either training mix or evaluation. Dialect labels in some corpora (notably QASR / MASC) are speaker-level rather than utterance-level and contain noise.
+**Dataset coverage.** Sudanese, Iraqi, Yemeni, and Mauritanian dialects are not separately represented in either training mix or evaluation. Per-dialect coverage is provided by single-dialect corpora (MASC, SADA, MGB-3, MGB-5) which we found sufficient for the dialect-balance constraint; we do not include QASR in this study, since equivalent dialect coverage is achieved without its license complications. Dialect labels in some corpora (notably MASC) are speaker-level rather than utterance-level and contain noise.
 
 **Single-machine RTF.** The two CPU benchmark hosts are commodity public-cloud instances; results may not transfer to bare-metal, NUMA-tuned, or AVX-512-tuned environments.
 
