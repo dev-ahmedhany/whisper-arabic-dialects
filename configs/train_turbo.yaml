@@ -3,7 +3,7 @@
 model_name: "openai/whisper-large-v3-turbo"
 language: "arabic"
 task: "transcribe"
-attn_implementation: "flash_attention_2"
+attn_implementation: "sdpa"
 
 train_jsonl: "test_sets/train.jsonl"
 val_jsonl: "test_sets/val.jsonl"
