@@ -27,7 +27,7 @@ python -m scripts.run_zero_shot_baseline --tiny
 | `src/train.py` | QLoRA fine-tuning recipe (NF4 + r=32 + bf16). |
 | `src/convert_ct2.py` | Merge LoRA → CT2 sweep across {fp32, fp16, int8_fp32, int8_fp16, int8}. |
 | `src/build_results_tables.py` | Aggregates `runs/results.jsonl` into the six paper tables and updates `paper/paper.md` in place. |
-| `scripts/prepare_*.py` | Per-dataset JSONL builders (CommonVoice, FLEURS, Casablanca, MASC, SADA, MGB-3, MGB-5). |
+| `scripts/prepare_*.py` | Per-dataset JSONL builders (Common Voice 18 ar, FLEURS, Casablanca, MASC, MGB-3, MGB-5). |
 | `scripts/run_zero_shot_baseline.py` | Drives the eval harness across the zero-shot baseline matrix. |
 | `scripts/run_benchmark_matrix.py` | Drives the eval harness across a config-defined matrix for any model. |
 | `configs/*.yaml` | Training hyperparameters and benchmark axis definitions. |

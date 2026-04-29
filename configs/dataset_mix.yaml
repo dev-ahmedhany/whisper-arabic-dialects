@@ -3,19 +3,23 @@
 # Test sources are NOT mixed into train; data_prep.py copies them through verbatim.
 #
 # All sources are accessible via HuggingFace Hub without external registration:
-#   common_voice_17 (mozilla-foundation/common_voice_17_0)
-#   mgb3            (ArabicSpeech/MGB-3)
-#   mgb5            (ArabicSpeech/MGB-5)
-#   masc            (pain/MASC)
-#   sada            (MBZUAI/sada)
-#   fleurs          (google/fleurs)
-#   casablanca      (MBZUAI-Paris/Casablanca)
+#   common_voice_18 (MohamedRashad/common-voice-18-arabic)  — MSA, CV18 community mirror
+#   mgb3            (ArabicSpeech/MGB-3)                    — Egyptian
+#   mgb5            (ArabicSpeech/MGB-5)                    — Maghrebi
+#   masc            (pain/MASC)                             — Levantine
+#   fleurs          (google/fleurs)                         — MSA test
+#   casablanca      (MBZUAI-Paris/Casablanca)               — multi-dialect test
+#
+# Note: Gulf is intentionally absent from the training mix. SADA's audio is not
+# available on HF Hub (metadata-only mirrors; full corpus is on Kaggle ~600 GB,
+# infeasible for our pipeline). We still benchmark Gulf on the held-out
+# Casablanca test set; the result is a cross-dialect transfer measurement.
 
 train:
   msa:
     hours: 12
     sources:
-      - "test_sets/common_voice_17_ar_train.jsonl"
+      - "test_sets/common_voice_18_ar_train.jsonl"
   egyptian:
     hours: 10
     sources:
@@ -28,10 +32,6 @@ train:
     hours: 9
     sources:
       - "test_sets/masc_levantine_train.jsonl"
-  gulf:
-    hours: 9
-    sources:
-      - "test_sets/sada_saudi_train.jsonl"
 
 test:
   msa:

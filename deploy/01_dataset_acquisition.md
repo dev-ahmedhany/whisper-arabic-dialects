@@ -55,15 +55,18 @@ huggingface-cli login   # paste your HF_TOKEN at the prompt
 
 | Dataset | HF repo | Hours used | Dialect tag | Script |
 |---|---|---|---|---|
-| Common Voice 17 (ar) | `mozilla-foundation/common_voice_17_0` | ~12 train | msa | `prepare_common_voice.py` |
+| Common Voice 18 (ar) | `MohamedRashad/common-voice-18-arabic` | ~12 train | msa | `prepare_common_voice.py` |
 | FLEURS (ar_eg) | `google/fleurs` | ~2 test | msa | `prepare_fleurs.py` |
 | Casablanca | `MBZUAI-Paris/Casablanca` | ~2 test (per dialect) | all 5 | `prepare_casablanca.py` |
 | MASC | `pain/MASC` | ~9 train | levantine | `prepare_masc.py` |
-| SADA | `MBZUAI/sada` | ~9 train | gulf | `prepare_sada.py` |
 | MGB-3 | `ArabicSpeech/MGB-3` | ~10 train | egyptian | `prepare_mgb3.py` |
 | MGB-5 | `ArabicSpeech/MGB-5` | ~10 train | maghrebi | `prepare_mgb5.py` |
 
-For Common Voice you may need to click "Agree and access" on the dataset page once before the script can pull. The rest are open access.
+All datasets above are openly accessible on HF Hub (no gating, no Mozilla Data Collective dependency).
+
+**Why we use the `MohamedRashad/common-voice-18-arabic` mirror instead of Mozilla's own `common_voice_17_0`:** as of October 2025, Mozilla emptied all official `mozilla-foundation/common_voice_*` HF Hub repos and moved Common Voice exclusively to the Mozilla Data Collective platform. The community CV18 ar mirror still hosts the audio (~2.7 GB, 28k train rows) and remains a faithful drop-in for ASR training.
+
+**Gulf is not a training dialect.** SADA 2022's audio is only on Kaggle (~600 GB, infeasible) and HF Hub mirrors are metadata-only. We retain Gulf as a held-out test dialect via Casablanca; the resulting Gulf WER is a cross-dialect transfer measurement.
 
 ## Step 1 — Pull every dataset
 
@@ -72,8 +75,8 @@ These can run in parallel terminals; they don't share state.
 ```bash
 # MSA + FLEURS test
 python -m scripts.prepare_common_voice --split train \
-  --out test_sets/common_voice_17_ar_train.jsonl \
-  --audio-dir audio/common_voice_17_ar
+  --out test_sets/common_voice_18_ar_train.jsonl \
+  --audio-dir audio/common_voice_18_ar
 
 python -m scripts.prepare_fleurs --split test \
   --out test_sets/fleurs_msa_test.jsonl \
@@ -84,14 +87,10 @@ python -m scripts.prepare_casablanca --split test \
   --out-dir test_sets --audio-dir audio/casablanca \
   --max-per-dialect 500
 
-# Levantine + Gulf training
+# Levantine training
 python -m scripts.prepare_masc --split train \
   --out test_sets/masc_levantine_train.jsonl \
   --audio-dir audio/masc
-
-python -m scripts.prepare_sada --split train \
-  --out test_sets/sada_saudi_train.jsonl \
-  --audio-dir audio/sada
 
 # Egyptian + Maghrebi training (HF Hub mirrors of MGB-3 / MGB-5)
 python -m scripts.prepare_mgb3 --split train \
@@ -154,11 +153,10 @@ GCS Standard storage in `us-central1` is roughly $0.020/GB/month. ~250 GB of dec
 
 | Dataset | License | Commercial use |
 |---|---|---|
-| Common Voice 17 | CC0 | Yes |
+| Common Voice 18 (community mirror) | CC0 (upstream) | Yes |
 | FLEURS | CC-BY-4.0 | Yes (with attribution) |
 | Casablanca | Per upstream dataset card | Check upstream |
 | MASC | Per dataset card | Check upstream |
-| SADA | Per dataset card; terms apply | Check upstream |
 | MGB-3 | Research use (per ArabicSpeech) | No |
 | MGB-5 | Research use (per ArabicSpeech) | No |
 

@@ -39,13 +39,13 @@ wait_group () {
 }
 
 # -----------------------------------------------------------------------------
-# Group A — three streaming downloads in parallel (heaviest jobs)
+# Group A — Common Voice (CV18 ar mirror) + MASC in parallel
 # -----------------------------------------------------------------------------
-echo ">>> Group A starting: Common Voice + MASC + SADA"
+echo ">>> Group A starting: Common Voice 18 ar + MASC"
 
 python -m scripts.prepare_common_voice --split train --max-samples 8000 \
-  --out test_sets/common_voice_17_ar_train.jsonl \
-  --audio-dir audio/common_voice_17_ar \
+  --out test_sets/common_voice_18_ar_train.jsonl \
+  --audio-dir audio/common_voice_18_ar \
   > logs/01_common_voice.log 2>&1 &
 A1=$!
 
@@ -55,13 +55,7 @@ python -m scripts.prepare_masc --split train --max-samples 8000 \
   > logs/02_masc.log 2>&1 &
 A2=$!
 
-python -m scripts.prepare_sada --split train --max-samples 8000 \
-  --out test_sets/sada_saudi_train.jsonl \
-  --audio-dir audio/sada \
-  > logs/03_sada.log 2>&1 &
-A3=$!
-
-wait_group "Group A" "$A1" "$A2" "$A3"
+wait_group "Group A" "$A1" "$A2"
 
 # -----------------------------------------------------------------------------
 # Group B — MGB-3 + MGB-5 in parallel

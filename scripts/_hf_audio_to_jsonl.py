@@ -26,9 +26,14 @@ def stream_to_jsonl(
     max_samples: int | None = None,
     streaming: bool = True,
     audio_column: str = "audio",
+    trust_remote_code: bool = False,
     extra_load_kwargs: dict | None = None,
 ) -> int:
-    """Returns count of rows written. Skips rows where text_fn returns empty string."""
+    """Returns count of rows written. Skips rows where text_fn returns empty string.
+
+    `trust_remote_code=True` is required for datasets that ship a custom loading
+    script (e.g. pain/MASC). Only enable for datasets you've inspected and trust.
+    """
     output_jsonl.parent.mkdir(parents=True, exist_ok=True)
     audio_dir.mkdir(parents=True, exist_ok=True)
     ds = load_dataset(
@@ -36,6 +41,7 @@ def stream_to_jsonl(
         name=name,
         split=split,
         streaming=streaming,
+        trust_remote_code=trust_remote_code,
         **(extra_load_kwargs or {}),
     )
     if not streaming:
