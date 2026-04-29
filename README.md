@@ -36,13 +36,14 @@ python -m scripts.run_zero_shot_baseline --tiny
 
 ## Reproducing the paper results
 
-Follow the runbooks in order:
+Follow the runbooks in order. Every command used to produce the paper's results is captured in one of these — no improvised steps.
 
-1. **`deploy/01_dataset_acquisition.md`** — get the seven datasets (some require LDC / challenge registration).
-2. **`deploy/02_gcp_training.md`** — provision the L4 training instance and run QLoRA on turbo (then large-v3).
-3. **`deploy/03_gcp_benchmark.md`** — provision the c3-standard-8 CPU instance and run the benchmark matrix.
-4. **`deploy/04_hetzner_benchmark.md`** — provision a Hetzner CX53 and replay the benchmark for cross-platform validation.
-5. **`deploy/05_artifacts_publishing.md`** — push models to HF Hub, make the W&B project public, push code.
+1. **`deploy/00_gcp_bootstrap.md`** — install `gcloud`, authenticate, link billing, enable APIs, confirm L4 quota, set up budget alerts.
+2. **`deploy/01_dataset_acquisition.md`** — pull the seven Arabic datasets from HuggingFace Hub and assemble the dialect-balanced splits.
+3. **`deploy/02_gcp_training.md`** — provision the L4 training instance and run QLoRA on turbo (then large-v3).
+4. **`deploy/03_gcp_benchmark.md`** — provision the `c3-standard-8` CPU instance and run the benchmark matrix.
+5. **`deploy/04_hetzner_benchmark.md`** — provision a Hetzner CX53 and replay the benchmark for cross-platform validation.
+6. **`deploy/05_artifacts_publishing.md`** — push models to HF Hub, make the W&B project public, push code.
 
 Approximate compute spend: ~$115 on GCP (training + benchmarking) plus ~$2 on Hetzner (cross-platform validation).
 

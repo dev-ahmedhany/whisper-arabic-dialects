@@ -4,8 +4,7 @@ QLoRA fine-tuning runs on a `g2-standard-16` (1× NVIDIA L4 24GB, Ada Lovelace, 
 
 ## Prerequisites
 
-- GCP project with billing enabled.
-- `gcloud` CLI authenticated: `gcloud auth login` and `gcloud config set project YOUR_PROJECT`.
+- `deploy/00_gcp_bootstrap.md` complete (gcloud installed and authed, project set, billing live, APIs enabled, L4 quota approved).
 - Datasets uploaded to GCS per `deploy/01_dataset_acquisition.md`.
 - `WANDB_API_KEY` and `HF_TOKEN` in your shell.
 
