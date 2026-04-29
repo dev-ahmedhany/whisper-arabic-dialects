@@ -92,23 +92,43 @@ gcloud services list --enabled \
 
 ## Step 6 — Check GPU quota for training
 
-L4 quota is per-region and starts at **0** for new projects. Phase 2 needs 1× L4 in `us-central1`.
+Phase 2 needs:
+- `NVIDIA_L4_GPUS ≥ 1` in `us-central1` (per-region quota)
+- `GPUS_ALL_REGIONS ≥ 1` (project-wide meta-quota that gates *every* GPU)
+
+Both must pass. Run:
 
 ```bash
+# Per-region GPU quotas
 gcloud compute regions describe us-central1 \
-  --format="table(quotas.metric, quotas.limit, quotas.usage)" \
-  | grep -i "GPU\|NVIDIA_L4"
+  --flatten="quotas[]" \
+  --format="value(quotas.metric, quotas.limit, quotas.usage)" \
+  | grep -iE "(NVIDIA|GPU)" \
+  | column -t -s $'\t'
+
+# Project-wide GPU meta-quota
+gcloud compute project-info describe \
+  --flatten="quotas[]" \
+  --format="value(quotas.metric, quotas.limit, quotas.usage)" \
+  | grep -iE "GPU" \
+  | column -t -s $'\t'
 ```
 
-If your `NVIDIA_L4_GPUS` (or generic `GPUS_ALL_REGIONS`) limit is `0`:
+You're looking for these two lines in the output:
+```
+NVIDIA_L4_GPUS    1.0  0.0
+GPUS_ALL_REGIONS  1.0  0.0
+```
+
+If either limit is `0.0`:
 
 1. Console → IAM & Admin → Quotas & System Limits.
-2. Filter for `NVIDIA L4 GPUs` in `us-central1` (or `GPUs (all regions)`).
+2. Filter for the failing metric (`NVIDIA L4 GPUs` filtered to `us-central1`, or `GPUs (all regions)` global).
 3. Tick the row → "Edit Quotas" → request `1`.
 4. Justification: "Research project — QLoRA fine-tuning of Whisper for multi-dialect Arabic ASR. Single L4, expected ~30 GPU-hours total."
 5. Approval typically lands in 1–24 hours.
 
-You cannot proceed to `deploy/02_gcp_training.md` until quota is granted.
+You cannot proceed to `deploy/02_gcp_training.md` until both quotas are at least `1`.
 
 ## Step 7 — Set up a budget alert
 
