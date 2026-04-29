@@ -148,23 +148,36 @@ def main() -> None:
         bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=True,
     )
-    # PEFT's PeftModelForSeq2SeqLM.forward unconditionally passes both
-    # input_ids and inputs_embeds (and a few other text-only kwargs) to
-    # base_model.forward(), but WhisperForConditionalGeneration.forward() only
-    # accepts input_features (mel spectrograms) plus a defined set of other
-    # kwargs. Monkey-patch Whisper.forward to silently drop the kwargs PEFT
-    # leaks that Whisper doesn't accept. Active for the entire process lifetime.
+    # PEFT + Seq2SeqTrainer leaks several kwargs into Whisper that Whisper
+    # doesn't accept. We patch BOTH Whisper.forward AND Whisper.generate.
+    #
+    # forward leakage (PEFT's PeftModelForSeq2SeqLM.forward passes these):
+    #   input_ids, inputs_embeds, task_ids
+    #
+    # generate leakage (Seq2SeqTrainer.prediction_step passes the inputs dict
+    # that includes labels, which WhisperForConditionalGeneration.generate's
+    # _validate_model_kwargs rejects):
+    #   labels
     if not getattr(WhisperForConditionalGeneration.forward, "_peft_compat_patched", False):
         _orig_whisper_forward = WhisperForConditionalGeneration.forward
-        _LEAKED_KWARGS = ("input_ids", "inputs_embeds", "task_ids")
+        _orig_whisper_generate = WhisperForConditionalGeneration.generate
+        _FORWARD_LEAKED = ("input_ids", "inputs_embeds", "task_ids")
+        _GENERATE_LEAKED = ("labels",)
 
         def _whisper_forward_peft_compat(self, *args, **kwargs):
-            for k in _LEAKED_KWARGS:
+            for k in _FORWARD_LEAKED:
                 kwargs.pop(k, None)
             return _orig_whisper_forward(self, *args, **kwargs)
 
+        def _whisper_generate_peft_compat(self, *args, **kwargs):
+            for k in _GENERATE_LEAKED:
+                kwargs.pop(k, None)
+            return _orig_whisper_generate(self, *args, **kwargs)
+
         _whisper_forward_peft_compat._peft_compat_patched = True
+        _whisper_generate_peft_compat._peft_compat_patched = True
         WhisperForConditionalGeneration.forward = _whisper_forward_peft_compat
+        WhisperForConditionalGeneration.generate = _whisper_generate_peft_compat
 
     model = WhisperForConditionalGeneration.from_pretrained(
         model_name,
