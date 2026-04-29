@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (82 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (83 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_seconds / audio_seconds (lower is better). TTFT-p95 is 95th-percentile time-to-first-token in milliseconds._
 
@@ -69,6 +69,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 44.6 [40.1, 49.1] | 15.40 [13.31, 17.76] | 0.608 | 3099 ms | 4.88 GB |
 | maghrebi | 100 | 86.5 [83.5, 89.6] | 43.90 [40.60, 47.72] | 0.894 | 7376 ms | 5.49 GB |
 | msa | 100 | 16.6 [14.3, 19.5] | 4.34 [3.58, 5.20] | 0.303 | 4434 ms | 2.92 GB |
+
+### ct2-faster-whisper · zero-shot-small · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 26.7 [23.7, 30.0] | 7.76 [6.51, 9.13] | 0.210 | 2968 ms | 1.58 GB |
 
 ### ct2-faster-whisper · zero-shot-small · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -259,7 +265,7 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | ct2-faster-whisper | zero-shot-base | 5 | 79.6% | 0.265 | 2781 ms | 1.94 GB |
 | ct2-faster-whisper | zero-shot-large-v3 | 5 | 49.5% | 1.271 | 7729 ms | 5.82 GB |
 | ct2-faster-whisper | zero-shot-medium | 5 | 54.7% | 0.899 | 7801 ms | 3.98 GB |
-| ct2-faster-whisper | zero-shot-small | 5 | 64.6% | 0.362 | 3514 ms | 2.42 GB |
+| ct2-faster-whisper | zero-shot-small | 5 | 61.2% | 0.349 | 3464 ms | 2.34 GB |
 | ct2-faster-whisper | zero-shot-tiny | 5 | 86.5% | 0.204 | 1907 ms | 1.69 GB |
 | ct2-faster-whisper | zero-shot-turbo | 5 | 48.5% | 0.794 | 5061 ms | 2.29 GB |
 | hf-transformers | zero-shot-base-hf | 1 | 49.0% | 0.080 | 1173 ms | 0.75 GB |

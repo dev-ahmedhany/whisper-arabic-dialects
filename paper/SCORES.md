@@ -24,12 +24,13 @@ Each metric is **lower-is-better**. Rank-based score: 1st = N pts, last = 1 pt. 
 
 ## small
 
-| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 4.00 | norm score |
+| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| whisper.cpp q5_1 | 24.9 | 0.499 | 5739 ms | 0.40 GB | **2.95** | 0.650 |
-| OpenAI fp32 | 25.2 | 0.209 | 2981 ms | 1.42 GB | **2.50** | 0.759 |
-| CT2 int8 | 27.4 | 0.115 | 1643 ms | 1.09 GB | **2.35** | 0.434 |
-| HF fp32 | 25.4 | 0.196 | 2709 ms | 1.97 GB | **2.20** | 0.678 |
+| whisper.cpp q5_1 | 24.9 | 0.499 | 5739 ms | 0.40 GB | **3.60** | 0.650 |
+| OpenAI fp32 | 25.2 | 0.209 | 2981 ms | 1.42 GB | **3.35** | 0.759 |
+| HF fp32 | 25.4 | 0.196 | 2709 ms | 1.97 GB | **3.05** | 0.678 |
+| CT2 int8 | 27.4 | 0.115 | 1643 ms | 1.09 GB | **2.85** | 0.434 |
+| CT2 float32 | 26.7 | 0.210 | 2968 ms | 1.58 GB | **2.15** | 0.430 |
 
 ## medium
 
@@ -63,10 +64,10 @@ Each metric is **lower-is-better**. Rank-based score: 1st = N pts, last = 1 pt. 
 
 | backend | n_models | mean rank score | mean norm score |
 |---|---:|---:|---:|
-| OpenAI fp32 | 6 | **2.83** | 0.692 |
-| HF fp32 | 6 | **2.73** | 0.636 |
-| CT2 int8 | 6 | **2.66** | 0.535 |
-| CT2 float32 | 1 | **2.35** | 0.480 |
+| OpenAI fp32 | 6 | **2.97** | 0.692 |
+| HF fp32 | 6 | **2.87** | 0.636 |
+| CT2 int8 | 6 | **2.74** | 0.535 |
+| whisper.cpp q5_1 | 3 | **2.33** | 0.336 |
 | whisper.cpp q5_0 | 3 | **2.33** | 0.502 |
-| whisper.cpp q5_1 | 3 | **2.12** | 0.336 |
+| CT2 float32 | 2 | **2.25** | 0.455 |
 
