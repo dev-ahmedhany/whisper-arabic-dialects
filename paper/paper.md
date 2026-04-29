@@ -151,11 +151,11 @@ We additionally evaluate `whisper-tiny` (39M), `whisper-base` (74M), and `whispe
 
 Three findings shape the production recommendation table (Table 6):
 
-1. **`tiny` is essentially unusable on Arabic.** Even on the easiest condition (FLEURS MSA) WER is 66.6%; on dialects it's 84–97%. The MSA WER is below the matrix-wide median, so it technically passes the WER floor in our recommendation logic, but a deployment engineer should treat tiny as not-fit-for-purpose.
-2. **`base` opens up the live-captioning use case.** TTFT_p95 = 617 ms on MSA (well under 1 s), RTF = 0.05, RAM < 200 MB at int8, and MSA WER 51.2% is usable for low-stakes captioning where missing words is acceptable. Cost: **$0.020 per hour of audio transcribed** — 6× cheaper than turbo.
-3. **`small` is the natural Arabic-MSA workhorse zero-shot.** 27.4% MSA WER is a real production-grade number, RTF 0.12, ~500 MB RAM. After fine-tuning, this is likely where the cost-optimized deployment lives.
+1. **Smaller models look great on MSA in isolation but collapse under fair multi-dialect aggregation.** `base / int8 / MSA` runs at 51.2% WER, 617 ms TTFT, $0.020/audio-hour — superficially attractive. Averaged across all 5 dialects (the right metric for any production deployment that doesn't pre-filter audio by dialect), `base` averages **~86%** WER. Same model, same compute, very different recommendation depending on whether you're being honest about dialect coverage. **Table 6 deliberately averages across dialects** to prevent this trap.
+2. **`tiny` is unusable on Arabic at any aggregation.** MSA 66.6%; multi-dialect average ~88%. Useless without fine-tuning.
+3. **No zero-shot configuration achieves real-time captioning across all five dialects.** Maghrebi (Casablanca Morocco-config) audio is longer than other dialects and pushes TTFT_p95 above 1 second for every model size we benchmarked. Section 10's "Real-time captioning" row is correctly empty for the zero-shot baseline — and likely remains so until fine-tuned smaller models close the gap.
 
-The smaller models do **not** improve the dialect numbers — `base` on Maghrebi is 95.5% (worse than turbo's 84.9%). For dialect-heavy deployments, larger models remain the only viable zero-shot option.
+For dialect-heavy deployments, larger models remain the only viable zero-shot option, and even those average ~50% WER. Phase 6 fine-tuning is where the dialect numbers should drop sharply.
 
 ### Table 1 — Quality ceiling per model (best WER achievable on CPU, fp32 / beam 5 / 8 threads)
 
