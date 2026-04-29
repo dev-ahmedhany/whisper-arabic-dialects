@@ -220,10 +220,17 @@ def table_6_recommendations(df: pd.DataFrame) -> str:
             f"{_fmt_wer(r)} | {r['rtf']:.3f} | {cost_str} |"
         )
 
-    # 1. Real-time captioning: minimize RTF subject to a quality floor (better than
-    #    median WER), so we don't pick a fast-but-useless config.
-    realtime = df[(df["rtf"] < 0.3) & (df["wer"] < median_wer)].sort_values("rtf").head(1)
-    rows.append(_row("Real-time captioning", realtime, "RTF < 0.3, WER < median"))
+    # 1. Real-time captioning: tail latency is what matters (one bad utterance ruins
+    #    the live UX). Use ttft_ms_p95 < 1000 ms as the constraint, plus a quality
+    #    floor so we don't pick a fast-but-useless config.
+    if "ttft_ms_p95" in df.columns:
+        realtime = df[(df["ttft_ms_p95"] < 1000) & (df["wer"] < median_wer)] \
+            .sort_values("ttft_ms_p95").head(1)
+        rows.append(_row("Real-time captioning", realtime, "TTFT-p95 < 1s, WER < median"))
+    else:
+        # Fallback for older runs.jsonl rows without TTFT.
+        realtime = df[(df["rtf"] < 0.3) & (df["wer"] < median_wer)].sort_values("rtf").head(1)
+        rows.append(_row("Real-time captioning", realtime, "RTF < 0.3, WER < median (no TTFT)"))
 
     # 2. Batch transcription, accuracy is everything.
     batch_min = df.sort_values("wer").head(1)

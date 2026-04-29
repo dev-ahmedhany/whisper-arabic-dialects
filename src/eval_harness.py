@@ -70,6 +70,13 @@ class EvalResult:
     cer: float
     cer_ci_lo: float
     cer_ci_hi: float
+    # Time-to-first-token: ms from model.transcribe(audio) call to first segment yield.
+    # End-to-end including audio load + mel extraction + first-segment decode. The
+    # paper's Real-time captioning recommendation row uses ttft_ms_p95 as its latency
+    # constraint (sub-second tail latency is the bar for usable live captioning).
+    ttft_ms_mean: float
+    ttft_ms_p50: float
+    ttft_ms_p95: float
     timestamp: str
     hardware_id: str
     platform_label: str
@@ -169,19 +176,29 @@ def evaluate_model(
 
         hypotheses: list[str] = []
         references: list[str] = []
+        ttfts_ms: list[float] = []
         total_audio = 0.0
         n_failed = 0
 
         start = time.perf_counter()
         for sample in samples:
             try:
+                t_call = time.perf_counter()
                 segs, info = model.transcribe(
                     sample["audio"],
                     beam_size=config.beam_size,
                     language=config.language,
                     task=config.task,
                 )
-                text = " ".join(s.text for s in segs)
+                # The segments object is a lazy generator — actual decoding work doesn't
+                # happen until next() is called. Time-to-first-token is the wall-clock
+                # from the transcribe() call to the first segment yielding.
+                seg_iter = iter(segs)
+                first_seg = next(seg_iter, None)
+                ttfts_ms.append((time.perf_counter() - t_call) * 1000.0)
+                pieces = [first_seg.text] if first_seg is not None else []
+                pieces.extend(s.text for s in seg_iter)
+                text = " ".join(pieces)
                 hypotheses.append(normalize_arabic(text))
                 references.append(normalize_arabic(sample["reference"]))
                 total_audio += float(info.duration)
@@ -197,6 +214,12 @@ def evaluate_model(
 
     wer_mean, wer_lo, wer_hi = bootstrap_wer_ci(references, hypotheses, n_bootstrap=n_bootstrap)
     cer_mean, cer_lo, cer_hi = bootstrap_cer_ci(references, hypotheses, n_bootstrap=n_bootstrap)
+
+    import numpy as _np
+    ttft_arr = _np.array(ttfts_ms, dtype=_np.float64) if ttfts_ms else _np.array([_np.nan])
+    ttft_mean = float(_np.nanmean(ttft_arr))
+    ttft_p50 = float(_np.nanpercentile(ttft_arr, 50))
+    ttft_p95 = float(_np.nanpercentile(ttft_arr, 95))
 
     result = EvalResult(
         config=asdict(config),
@@ -215,6 +238,9 @@ def evaluate_model(
         cer=jiwer.cer(references, hypotheses),
         cer_ci_lo=cer_lo,
         cer_ci_hi=cer_hi,
+        ttft_ms_mean=ttft_mean,
+        ttft_ms_p50=ttft_p50,
+        ttft_ms_p95=ttft_p95,
         timestamp=time.strftime("%Y-%m-%dT%H:%M:%S"),
         hardware_id=get_hardware_id(),
         platform_label=platform_label,
