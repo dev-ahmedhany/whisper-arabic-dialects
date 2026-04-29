@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (83 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (85 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_seconds / audio_seconds (lower is better). TTFT-p95 is 95th-percentile time-to-first-token in milliseconds._
 
@@ -9,6 +9,12 @@ _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_second
 Each section header is `backend · model · compute (beam=B, threads=T, platform)`. The table inside breaks that cell down by dialect.
 
 ## Per-cell rows
+
+### ct2-faster-whisper · zero-shot-base · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 49.2 [45.7, 53.0] | 16.12 [14.46, 18.09] | 0.103 | 1703 ms | 0.79 GB |
 
 ### ct2-faster-whisper · zero-shot-base · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -30,6 +36,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | maghrebi | 100 | 95.5 [93.5, 97.3] | 50.79 [48.54, 53.16] | 0.391 | 4320 ms | 2.85 GB |
 | msa | 100 | 51.0 [47.4, 54.9] | 16.43 [14.78, 18.44] | 0.048 | 605 ms | 4.11 GB |
 
+### ct2-faster-whisper · zero-shot-large-v3 · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 8.5 [6.6, 10.3] | 2.48 [1.83, 3.12] | 1.072 | 15144 ms | 8.36 GB |
+
 ### ct2-faster-whisper · zero-shot-large-v3 · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
@@ -49,6 +61,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 37.3 [33.3, 41.5] | 13.08 [10.95, 15.43] | 1.294 | 5354 ms | 6.42 GB |
 | maghrebi | 100 | 84.6 [80.7, 88.4] | 43.76 [39.84, 47.59] | 1.482 | 11077 ms | 6.41 GB |
 | msa | 100 | 8.5 [6.6, 10.4] | 2.50 [1.87, 3.16] | 0.504 | 7459 ms | 4.56 GB |
+
+### ct2-faster-whisper · zero-shot-medium · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 15.4 [13.1, 18.1] | 4.08 [3.36, 4.90] | 0.598 | 8388 ms | 4.32 GB |
 
 ### ct2-faster-whisper · zero-shot-medium · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -95,6 +113,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 56.6 [52.6, 61.0] | 21.79 [19.21, 24.32] | 0.273 | 1667 ms | 2.96 GB |
 | maghrebi | 100 | 88.7 [86.1, 91.3] | 43.84 [40.75, 46.93] | 0.510 | 5956 ms | 4.41 GB |
 | msa | 100 | 27.4 [24.3, 31.0] | 7.95 [6.74, 9.33] | 0.116 | 1671 ms | 2.28 GB |
+
+### ct2-faster-whisper · zero-shot-tiny · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 67.0 [63.8, 70.4] | 24.37 [22.30, 26.67] | 0.097 | 1335 ms | 0.46 GB |
 
 ### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -200,14 +224,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
-| msa | 50 | 10.3 [7.3, 13.6] | 2.75 [1.76, 3.83] | 0.547 | 6335 ms | 3.67 GB |
 | msa | 50 | 10.3 [7.3, 13.6] | 2.75 [1.76, 3.83] | 0.550 | 6427 ms | 3.66 GB |
 
 ### openai-whisper · zero-shot-medium-openai · float32  _(beam=1, threads=0, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
-| msa | 50 | 13.8 [10.6, 17.3] | 3.71 [2.77, 4.78] | 0.576 | 7919 ms | 3.57 GB |
 | msa | 50 | 13.8 [10.6, 17.3] | 3.71 [2.77, 4.78] | 0.579 | 7959 ms | 3.56 GB |
 
 ### openai-whisper · zero-shot-small-openai · float32  _(beam=1, threads=0, gcp-c3-standard-8)_
@@ -262,11 +284,11 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 
 | backend | model | n_cells | avg WER | avg RTF | avg TTFT_p95 | avg RAM |
 |---|---|---|---|---|---|---|
-| ct2-faster-whisper | zero-shot-base | 5 | 79.6% | 0.265 | 2781 ms | 1.94 GB |
-| ct2-faster-whisper | zero-shot-large-v3 | 5 | 49.5% | 1.271 | 7729 ms | 5.82 GB |
-| ct2-faster-whisper | zero-shot-medium | 5 | 54.7% | 0.899 | 7801 ms | 3.98 GB |
+| ct2-faster-whisper | zero-shot-base | 5 | 76.8% | 0.250 | 2683 ms | 1.84 GB |
+| ct2-faster-whisper | zero-shot-large-v3 | 5 | 45.7% | 1.252 | 8403 ms | 6.05 GB |
+| ct2-faster-whisper | zero-shot-medium | 5 | 51.1% | 0.871 | 7854 ms | 4.01 GB |
 | ct2-faster-whisper | zero-shot-small | 5 | 61.2% | 0.349 | 3464 ms | 2.34 GB |
-| ct2-faster-whisper | zero-shot-tiny | 5 | 86.5% | 0.204 | 1907 ms | 1.69 GB |
+| ct2-faster-whisper | zero-shot-tiny | 5 | 84.7% | 0.194 | 1855 ms | 1.57 GB |
 | ct2-faster-whisper | zero-shot-turbo | 5 | 48.5% | 0.794 | 5061 ms | 2.29 GB |
 | hf-transformers | zero-shot-base-hf | 1 | 49.0% | 0.080 | 1173 ms | 0.75 GB |
 | hf-transformers | zero-shot-large-v3-hf | 1 | 8.7% | 0.954 | 12670 ms | 7.64 GB |
@@ -277,8 +299,8 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | hf-transformers | zero-shot-turbo-hf | 1 | 9.6% | 0.364 | 4412 ms | 4.11 GB |
 | openai-whisper | zero-shot-base-openai | 1 | 47.8% | 0.084 | 1210 ms | 0.73 GB |
 | openai-whisper | zero-shot-large-v3-openai | 1 | 8.4% | 1.014 | 13584 ms | 6.72 GB |
-| openai-whisper | zero-shot-large-v3-turbo-openai | 1 | 10.3% | 0.548 | 6381 ms | 3.66 GB |
-| openai-whisper | zero-shot-medium-openai | 1 | 13.8% | 0.577 | 7939 ms | 3.57 GB |
+| openai-whisper | zero-shot-large-v3-turbo-openai | 1 | 10.3% | 0.550 | 6427 ms | 3.66 GB |
+| openai-whisper | zero-shot-medium-openai | 1 | 13.8% | 0.579 | 7959 ms | 3.56 GB |
 | openai-whisper | zero-shot-small-openai | 1 | 25.2% | 0.209 | 2981 ms | 1.42 GB |
 | openai-whisper | zero-shot-tiny-openai | 1 | 65.8% | 0.048 | 705 ms | 0.59 GB |
 | whisper.cpp | zero-shot-base-cpp | 1 | 50.8% | 0.183 | 2120 ms | 0.24 GB |

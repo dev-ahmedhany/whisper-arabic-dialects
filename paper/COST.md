@@ -64,7 +64,6 @@ Projections marked `(proj)` use a scaling factor vs gcp-c3-standard-8.
 | ct2-faster-whisper | int8 | 10.4 | 0.307 | $0.00012 | $0.00205 |
 | ct2-faster-whisper | int8_float32 | 10.4 | 0.302 | $0.00012 | $0.00201 |
 | whisper.cpp | q5_0 | 9.8 | 2.352 | $0.00094 | $0.01568 |
-| openai-whisper | float32 | 10.3 | 0.547 | $0.00022 | $0.00365 |
 | openai-whisper | float32 | 10.3 | 0.550 | $0.00022 | $0.00366 |
 | hf-transformers | float32 | 9.6 | 0.545 | $0.00022 | $0.00363 |
 | hf-transformers | float32 | 9.6 | 0.364 | $0.00015 | $0.00242 |

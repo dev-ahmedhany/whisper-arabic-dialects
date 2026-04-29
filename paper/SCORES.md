@@ -6,21 +6,23 @@ Each metric is **lower-is-better**. Rank-based score: 1st = N pts, last = 1 pt. 
 
 ## tiny
 
-| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 4.00 | norm score |
+| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| HF fp32 | 64.9 | 0.051 | 768 ms | 0.59 GB | **3.00** | 0.711 |
-| OpenAI fp32 | 65.8 | 0.048 | 705 ms | 0.59 GB | **2.85** | 0.665 |
-| CT2 int8 | 66.6 | 0.030 | 764 ms | 0.38 GB | **2.70** | 0.687 |
-| whisper.cpp q5_1 | 69.2 | 0.073 | 925 ms | 0.18 GB | **1.45** | 0.150 |
+| HF fp32 | 64.9 | 0.051 | 768 ms | 0.59 GB | **3.85** | 0.773 |
+| CT2 int8 | 66.6 | 0.030 | 764 ms | 0.38 GB | **3.70** | 0.713 |
+| OpenAI fp32 | 65.8 | 0.048 | 705 ms | 0.59 GB | **3.70** | 0.694 |
+| whisper.cpp q5_1 | 69.2 | 0.073 | 925 ms | 0.18 GB | **1.95** | 0.318 |
+| CT2 float32 | 67.0 | 0.097 | 1335 ms | 0.46 GB | **1.80** | 0.307 |
 
 ## base
 
-| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 4.00 | norm score |
+| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| OpenAI fp32 | 47.8 | 0.084 | 1210 ms | 0.73 GB | **3.00** | 0.745 |
-| HF fp32 | 49.0 | 0.080 | 1173 ms | 0.75 GB | **2.70** | 0.569 |
-| CT2 int8 | 51.2 | 0.050 | 617 ms | 0.61 GB | **2.35** | 0.391 |
-| whisper.cpp q5_1 | 50.8 | 0.183 | 2120 ms | 0.24 GB | **1.95** | 0.209 |
+| OpenAI fp32 | 47.8 | 0.084 | 1210 ms | 0.73 GB | **4.00** | 0.756 |
+| HF fp32 | 49.0 | 0.080 | 1173 ms | 0.75 GB | **3.70** | 0.580 |
+| CT2 int8 | 51.2 | 0.050 | 617 ms | 0.61 GB | **2.85** | 0.399 |
+| CT2 float32 | 49.2 | 0.103 | 1703 ms | 0.79 GB | **2.35** | 0.461 |
+| whisper.cpp q5_1 | 50.8 | 0.183 | 2120 ms | 0.24 GB | **2.10** | 0.209 |
 
 ## small
 
@@ -34,40 +36,42 @@ Each metric is **lower-is-better**. Rank-based score: 1st = N pts, last = 1 pt. 
 
 ## medium
 
-| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 4.00 | norm score |
+| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| OpenAI fp32 | 13.8 | 0.576 | 7919 ms | 3.57 GB | **3.00** | 0.826 |
-| HF fp32 | 14.2 | 0.543 | 7347 ms | 4.75 GB | **2.70** | 0.730 |
-| CT2 int8 | 16.6 | 0.301 | 4388 ms | 2.47 GB | **2.35** | 0.439 |
-| whisper.cpp q5_0 | 14.6 | 1.804 | 20441 ms | 0.89 GB | **1.95** | 0.510 |
+| OpenAI fp32 | 13.8 | 0.579 | 7959 ms | 3.56 GB | **4.00** | 0.826 |
+| HF fp32 | 14.2 | 0.543 | 7347 ms | 4.75 GB | **3.55** | 0.730 |
+| CT2 int8 | 16.6 | 0.301 | 4388 ms | 2.47 GB | **2.85** | 0.439 |
+| whisper.cpp q5_0 | 14.6 | 1.804 | 20441 ms | 0.89 GB | **2.60** | 0.510 |
+| CT2 float32 | 15.4 | 0.598 | 8388 ms | 4.32 GB | **2.00** | 0.511 |
 
 ## turbo
 
 | backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| HF fp32 | 9.6 | 0.545 | 6351 ms | 3.68 GB | **4.05** | 0.847 |
+| HF fp32 | 9.6 | 0.545 | 6351 ms | 3.68 GB | **4.20** | 0.847 |
 | whisper.cpp q5_0 | 9.8 | 2.352 | 25716 ms | 0.80 GB | **3.10** | 0.512 |
 | CT2 int8 | 10.4 | 0.307 | 3797 ms | 1.59 GB | **2.85** | 0.469 |
-| OpenAI fp32 | 10.3 | 0.547 | 6335 ms | 3.67 GB | **2.65** | 0.366 |
+| OpenAI fp32 | 10.3 | 0.550 | 6427 ms | 3.66 GB | **2.50** | 0.366 |
 | CT2 float32 | 10.0 | 0.688 | 8286 ms | 4.66 GB | **2.35** | 0.480 |
 
 ## large-v3
 
-| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 4.00 | norm score |
+| backend | WER % | RTF | TTFT-p95 | Peak RAM | rank score / 5.00 | norm score |
 |---|---:|---:|---:|---:|---:|---:|
-| CT2 int8 | 8.5 | 0.514 | 7531 ms | 3.71 GB | **3.35** | 0.787 |
-| OpenAI fp32 | 8.4 | 1.014 | 13584 ms | 6.72 GB | **3.00** | 0.792 |
-| whisper.cpp q5_0 | 8.5 | 2.806 | 31714 ms | 1.53 GB | **1.95** | 0.483 |
-| HF fp32 | 8.7 | 0.954 | 12670 ms | 7.64 GB | **1.70** | 0.280 |
+| OpenAI fp32 | 8.4 | 1.014 | 13584 ms | 6.72 GB | **4.00** | 0.805 |
+| CT2 int8 | 8.5 | 0.514 | 7531 ms | 3.71 GB | **3.85** | 0.793 |
+| CT2 float32 | 8.5 | 1.072 | 15144 ms | 8.36 GB | **2.85** | 0.595 |
+| HF fp32 | 8.7 | 0.954 | 12670 ms | 7.64 GB | **2.20** | 0.295 |
+| whisper.cpp q5_0 | 8.5 | 2.806 | 31714 ms | 1.53 GB | **2.10** | 0.483 |
 
 ## Overall (mean across model sizes)
 
 | backend | n_models | mean rank score | mean norm score |
 |---|---:|---:|---:|
-| OpenAI fp32 | 6 | **2.97** | 0.692 |
-| HF fp32 | 6 | **2.87** | 0.636 |
-| CT2 int8 | 6 | **2.74** | 0.535 |
-| whisper.cpp q5_1 | 3 | **2.33** | 0.336 |
-| whisper.cpp q5_0 | 3 | **2.33** | 0.502 |
-| CT2 float32 | 2 | **2.25** | 0.455 |
+| OpenAI fp32 | 6 | **3.59** | 0.701 |
+| HF fp32 | 6 | **3.42** | 0.651 |
+| CT2 int8 | 6 | **3.16** | 0.541 |
+| whisper.cpp q5_0 | 3 | **2.60** | 0.502 |
+| whisper.cpp q5_1 | 3 | **2.55** | 0.392 |
+| CT2 float32 | 6 | **2.25** | 0.464 |
 
