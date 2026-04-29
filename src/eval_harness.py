@@ -34,10 +34,14 @@ from typing import Optional
 
 import jiwer
 import psutil
-from faster_whisper import WhisperModel
 
 from src.bootstrap_ci import bootstrap_cer_ci, bootstrap_wer_ci
 from src.normalization import NORMALIZER_VERSION, normalize_arabic
+
+# faster_whisper is lazy-imported in evaluate_model so that other benchmarks
+# (bench_hf_transformers, bench_whisper_cpp, bench_openai_whisper) can re-use
+# EvalConfig / EvalResult / _PeakMemorySampler / get_hardware_id from this
+# module on hosts where faster_whisper isn't installed.
 
 
 @dataclass
@@ -159,6 +163,7 @@ def evaluate_model(
     sampler.start()
 
     try:
+        from faster_whisper import WhisperModel
         model = WhisperModel(
             config.model_path,
             device=config.device,
