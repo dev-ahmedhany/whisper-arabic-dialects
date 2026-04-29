@@ -176,37 +176,75 @@ def table_5_cross_platform(df: pd.DataFrame) -> str:
     return header + "\n" + "\n".join(rows) if rows else "_(no overlapping rows)_"
 
 
+# Per-platform hourly rates (USD). Used to derive cost_per_audio_hour = $/hr × RTF
+# in Table 6 production recommendations. Add new platforms here as we benchmark them.
+PLATFORM_HOURLY_USD = {
+    "gcp-c3-standard-8": 0.40,
+    "gcp-n2-standard-8": 0.30,
+    "hetzner-cx53": 0.043,
+    "local": 0.0,
+    "dryrun": 0.0,
+}
+
+
+def _add_cost_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df["hourly_usd"] = df["platform_label"].map(PLATFORM_HOURLY_USD).fillna(0.0)
+    # Cost per hour of *audio* transcribed = (machine $/hr) × RTF.
+    # Example: at $0.40/hr and RTF=0.5, transcribing 1h of audio costs $0.20.
+    df["cost_per_audio_hour"] = df["hourly_usd"] * df["rtf"]
+    return df
+
+
 def table_6_recommendations(df: pd.DataFrame) -> str:
+    """Five rows, each picking one cell from the matrix per a deployment constraint.
+
+    The "balanced" and "cost-optimized" rows are the headline answers to the
+    paper's question: what config should a practitioner deploy? Constraints come
+    from plan.md §Production Deployment Recommendation.
+    """
     if df.empty:
         return "_(no data yet)_"
+    df = _add_cost_columns(df)
+    median_wer = float(df["wer"].median())
     rows = []
 
     def _row(label: str, sub: pd.DataFrame, constraint: str) -> str:
         if sub.empty:
             return f"| {label} | {constraint} | - | - | - | - | - | - | - | - |"
         r = sub.iloc[0]
+        cost_str = f"${r['cost_per_audio_hour']:.3f}/audio-hr" if r["hourly_usd"] > 0 else "-"
         return (
             f"| {label} | {constraint} | {r['cfg_model_name']} | {r['cfg_compute_type']} | "
             f"{int(r['cfg_beam_size'])} | {int(r['cfg_cpu_threads'])} | {r['platform_label']} | "
-            f"{_fmt_wer(r)} | {r['rtf']:.3f} | - |"
+            f"{_fmt_wer(r)} | {r['rtf']:.3f} | {cost_str} |"
         )
 
-    realtime = df[df["rtf"] < 0.3].sort_values("wer").head(1)
-    rows.append(_row("Real-time captioning", realtime, "RTF < 0.3"))
+    # 1. Real-time captioning: minimize RTF subject to a quality floor (better than
+    #    median WER), so we don't pick a fast-but-useless config.
+    realtime = df[(df["rtf"] < 0.3) & (df["wer"] < median_wer)].sort_values("rtf").head(1)
+    rows.append(_row("Real-time captioning", realtime, "RTF < 0.3, WER < median"))
 
+    # 2. Batch transcription, accuracy is everything.
     batch_min = df.sort_values("wer").head(1)
     rows.append(_row("Batch transcription (min WER)", batch_min, "min WER"))
 
-    edge = df[df["peak_memory_mb"] < 1024].sort_values("wer").head(1)
-    rows.append(_row("Edge deployment", edge, "mem < 1 GB"))
+    # 3. Edge: smallest memory footprint at a quality floor.
+    edge = df[(df["peak_memory_mb"] < 1024) & (df["wer"] < median_wer)] \
+        .sort_values("peak_memory_mb").head(1)
+    rows.append(_row("Edge deployment", edge, "RAM < 1 GB, WER < median"))
 
+    # 4. Balanced production: best WER under a usable latency budget.
     balanced = df[df["rtf"] < 0.5].sort_values("wer").head(1)
-    rows.append(_row("Balanced production", balanced, "RTF < 0.5, max acc"))
+    rows.append(_row("Balanced production", balanced, "RTF < 0.5, max accuracy"))
 
-    rows.append(_row("Cost-optimized", df.sort_values("rtf").head(1), "min $/hr × RTF"))
+    # 5. Cost-optimized: minimize $/audio-hour subject to a quality floor (else trivially
+    #    picks the cheapest+fastest, which may be unusable).
+    cost_opt = df[df["wer"] < median_wer].sort_values("cost_per_audio_hour").head(1)
+    rows.append(_row("Cost-optimized", cost_opt, "min $/audio-hr, WER < median"))
 
     header = (
-        "| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/hour |\n"
+        "| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/audio-hr |\n"
         "|---|---|---|---|---|---|---|---|---|---|"
     )
     return header + "\n" + "\n".join(rows)
