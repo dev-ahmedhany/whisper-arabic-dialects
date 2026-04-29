@@ -127,7 +127,15 @@ Cells are sampled from a four-axis sweep (no full Cartesian product) defined by 
 
 ## 4. Zero-Shot Baselines
 
-Establishes the starting point: zero-shot `large-v3` and `turbo` evaluated through the same harness on the same data. Sanity check: do the FLEURS / Casablanca baseline numbers roughly match published Casablanca and Open Universal Arabic Leaderboard values?
+Establishes the starting point: the full Whisper family evaluated zero-shot through the same harness on the same data. Sanity check: do the FLEURS / Casablanca baseline numbers roughly match published Casablanca and Open Universal Arabic Leaderboard values?
+
+**Key findings from the 20-cell zero-shot run (turbo + large-v3 × int8/int8_fp32 × 5 dialects, beam=1, threads=4, c3-standard-8, 100 samples per cell):**
+
+- **MSA is solved zero-shot.** FLEURS MSA WER is **8.5%** (large-v3) / **10.4%** (turbo) — both within published Whisper paper numbers. No fine-tuning needed for clean MSA broadcast/read speech.
+- **Dialects degrade sharply.** Casablanca per-dialect WERs zero-shot: Levantine 37–40%, Egyptian 58–65%, Gulf 61%, Maghrebi 85%. Maghrebi is essentially failure-mode for both models — this is the dialect with the least Whisper training data and the most divergent phonology.
+- **Turbo is the production sweet spot before FT.** Across all dialects, turbo lags large-v3 by **2–7 WER points** but delivers ~1.7× lower RTF on the same hardware. The cost-per-audio-hour analysis (Table 6) picks turbo for Balanced production (RTF 0.31, $0.123/hr) and Cost-optimized ($0.121/hr) rows.
+- **`int8` vs `int8_fp32` is a wash.** Same WER (within bootstrap CI) and same RTF for both — the 16-bit-activation variant offers no measurable benefit at int8 weight quantization on c3-standard-8.
+- **TTFT is too slow for live captioning.** turbo/large-v3 TTFT_p95 is **3.5–7 seconds** — above the ~1 second threshold that real-time captioning needs. Section 10's "Real-time captioning" row is empty for the large-model family. We address this in §4.1 by extending the zero-shot sweep to the smaller Whisper variants (`tiny / base / small / medium`).
 
 ### Table 1 — Quality ceiling per model (best WER achievable on CPU, fp32 / beam 5 / 8 threads)
 
