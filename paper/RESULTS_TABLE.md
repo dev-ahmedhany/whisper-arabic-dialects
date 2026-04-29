@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (75 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (76 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_seconds / audio_seconds (lower is better). TTFT-p95 is 95th-percentile time-to-first-token in milliseconds._
 
@@ -214,6 +214,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 |---|---|---|---|---|---|---|
 | msa | 50 | 8.5 [6.3, 11.0] | 2.37 [1.54, 3.30] | 2.806 | 31714 ms | 1.53 GB |
 
+### whisper.cpp · zero-shot-large-v3-turbo-cpp · q5_0  _(beam=1, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 50 | 9.8 [6.9, 12.9] | 2.56 [1.64, 3.61] | 2.352 | 25716 ms | 0.80 GB |
+
 ### whisper.cpp · zero-shot-medium-cpp · q5_0  _(beam=1, threads=4, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
@@ -244,4 +250,5 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | openai-whisper | zero-shot-small-openai | 1 | 25.2% | 0.209 | 2981 ms | 1.42 GB |
 | openai-whisper | zero-shot-tiny-openai | 1 | 65.8% | 0.048 | 705 ms | 0.59 GB |
 | whisper.cpp | zero-shot-large-v3-cpp | 1 | 8.5% | 2.806 | 31714 ms | 1.53 GB |
+| whisper.cpp | zero-shot-large-v3-turbo-cpp | 1 | 9.8% | 2.352 | 25716 ms | 0.80 GB |
 | whisper.cpp | zero-shot-medium-cpp | 1 | 14.6% | 1.804 | 20441 ms | 0.89 GB |
