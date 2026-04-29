@@ -2,13 +2,53 @@
 
 All datasets used in this study are accessible via HuggingFace Hub — no external registrations required.
 
-Recommended host: a beefy disk (~500 GB) on the same project where you'll do training. Datasets often re-decode; you don't want to re-download to GCP from Hetzner.
+Datasets decompress to ~250 GB of audio plus per-dataset JSONLs. We do this on a small dedicated GCP VM (cheap, throwaway) rather than on a laptop, so the download stays inside Google's network all the way to GCS.
 
 ## Prerequisites
 
+- `deploy/00_gcp_bootstrap.md` complete (gcloud authed, project set, billing live, APIs enabled).
+- `HF_TOKEN` ready (from <https://huggingface.co/settings/tokens>, scope: read).
+
+## Step 0 — Provision a data-prep VM
+
 ```bash
-huggingface-cli login   # paste your HF_TOKEN
-pip install -r requirements.txt -e .
+gcloud compute instances create whisper-dataprep \
+  --zone=us-central1-a \
+  --machine-type=e2-standard-4 \
+  --image-family=debian-12 \
+  --image-project=debian-cloud \
+  --boot-disk-size=500GB \
+  --boot-disk-type=pd-balanced \
+  --scopes=cloud-platform
+```
+
+`e2-standard-4` is ~$0.13/hr — cheapest sensible spec for an I/O-bound prep job. `--scopes=cloud-platform` gives the VM ambient credentials for `gsutil` so you don't need a separate service-account dance to write to your bucket.
+
+SSH in:
+
+```bash
+gcloud compute ssh whisper-dataprep --zone=us-central1-a
+```
+
+(The first SSH triggers the firewall rule + key creation. ~30s.)
+
+Inside the VM, install Python 3.11, ffmpeg, and the repo:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3.11 python3.11-venv python3-pip git ffmpeg libsndfile1
+git clone https://github.com/dev-ahmedhany/whisper-arabic-dialects.git
+cd whisper-arabic-dialects
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -U pip uv
+uv pip install -r requirements.txt -e .
+```
+
+Authenticate to HF Hub (the prep scripts need this for Common Voice 17):
+
+```bash
+huggingface-cli login   # paste your HF_TOKEN at the prompt
 ```
 
 ## Datasets at a glance
@@ -87,17 +127,28 @@ Sanity-check `split_summary.json`: hours per dialect should be within ~2× of ea
 
 ## Step 3 — Push to GCS for the training instance
 
+Bucket creation is one-time. Skip if already present (`gsutil ls -L gs://dev-ahmedhany-whisper-arabic` to check).
+
 ```bash
 gsutil mb -l us-central1 gs://dev-ahmedhany-whisper-arabic
 gsutil -m cp -r test_sets/ gs://dev-ahmedhany-whisper-arabic/test_sets/
 gsutil -m cp -r audio/      gs://dev-ahmedhany-whisper-arabic/audio/
 ```
 
-The GCP training instance will pull from this bucket on startup.
+GCS-to-GCS within the same region is free egress. The training instance will pull from this bucket in `deploy/02_gcp_training.md` Step 2.
+
+## Step 4 — Delete the data-prep VM
+
+The VM is throwaway — once upload to GCS completes, kill it. `e2-standard-4` is cheap but adds up if forgotten.
+
+```bash
+exit                                    # leave the SSH session
+gcloud compute instances delete whisper-dataprep --zone=us-central1-a --quiet
+```
 
 ## Storage cost note
 
-GCS Standard storage in `us-central1` is roughly $0.020/GB/month. ~250 GB of decoded audio = ~$5/month while you iterate. Move to Coldline (`gsutil rewrite -s coldline`) once training is done if you want long-term retention.
+GCS Standard storage in `us-central1` is roughly $0.020/GB/month. ~250 GB of decoded audio = ~$5/month while you iterate. Move to Coldline (`gsutil rewrite -s coldline gs://dev-ahmedhany-whisper-arabic/audio/**`) once training is done if you want long-term retention.
 
 ## License notes
 
