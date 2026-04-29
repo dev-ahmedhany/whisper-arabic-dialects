@@ -131,6 +131,8 @@ Establishes the starting point: zero-shot `large-v3` and `turbo` evaluated throu
 
 <!-- INSERT: table_1 -->
 
+_(no rows match fp32 / beam=5 / 8 threads)_
+
 ## 5. Fine-Tuning Both Models
 
 Identical QLoRA recipe applied to turbo and large-v3. Training curves (loss + val WER) are public on the W&B project page; key snapshots are reproduced below.
@@ -166,13 +168,15 @@ Full quality, speed, Pareto, and thread-scaling matrices on `gcp-c3-standard-8`.
 
 <!-- INSERT: table_2 -->
 
-### Table 3 — Beam size impact on FT turbo (GCP, int8_fp32, 4 threads)
+_(no ft-turbo rows at beam=1, 4 threads)_
 
 <!-- INSERT: table_3 -->
 
-### Table 4 — Thread scaling on FT turbo (GCP, int8_fp32, beam 1, MSA)
+_(no rows at int8_float32, 4 threads)_
 
 <!-- INSERT: table_4 -->
+
+_(no rows for thread-scaling sweep)_
 
 ## 9. Cross-Platform Validation on Hetzner CX53
 
@@ -182,6 +186,8 @@ A subset of the GCP matrix is replayed on a Hetzner CX53 (AMD EPYC, ~$0.043/hr) 
 
 <!-- INSERT: table_5 -->
 
+_(both platforms required for cross-platform table)_
+
 ## 10. Production Recommendations
 
 Derived from the Pareto data, not assumed. Each row picks the best cell from the matrix subject to a deployment constraint.
@@ -189,6 +195,14 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 ### Table 6 — Production recommendations
 
 <!-- INSERT: table_6 -->
+
+| Use case | Constraint | Best model | Compute | Beam | Threads | Platform | WER | RTF | $/audio-hr |
+|---|---|---|---|---|---|---|---|---|---|
+| Real-time captioning | TTFT-p95 < 1s, WER < median | - | - | - | - | - | - | - | - |
+| Batch transcription (min WER) | min WER | zero-shot-large-v3 | int8 | 1 | 4 | gcp-c3-standard-8 | 8.5 [6.6, 10.4] | 0.514 | $0.206/audio-hr |
+| Edge deployment | RAM < 1 GB, WER < median | - | - | - | - | - | - | - | - |
+| Balanced production | RTF < 0.5, max accuracy | zero-shot-turbo | int8 | 1 | 4 | gcp-c3-standard-8 | 10.4 [8.4, 12.4] | 0.307 | $0.123/audio-hr |
+| Cost-optimized | min $/audio-hr, WER < median | zero-shot-turbo | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 10.4 [8.4, 12.4] | 0.302 | $0.121/audio-hr |
 
 ## 11. Error Analysis
 
