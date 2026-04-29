@@ -1,0 +1,13 @@
+# CPU-only benchmark image. Slim, no torch/transformers needed for inference.
+faster-whisper>=1.0.3
+ctranslate2>=4.4
+jiwer>=3.0
+soundfile>=0.12
+librosa>=0.10
+numpy>=1.26,<2.2
+scipy>=1.13
+pandas>=2.2
+psutil>=6.0
+PyYAML>=6.0
+tqdm>=4.66
+huggingface_hub>=0.25

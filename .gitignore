@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Local env
+.env
+.env.local
+
+# Run artifacts (results land here, do not commit)
+runs/*
+!runs/.gitkeep
+test_sets/*
+!test_sets/.gitkeep
+checkpoints/
+whisper-merged/
+whisper-faster-*/
+*.ckpt
+*.bin
+*.safetensors
+*.pt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Build
+build/
+dist/
+
+# wandb
+wandb/
+
+# Paper figures regenerated from data
+paper/figures/*.png
+!paper/figures/.gitkeep

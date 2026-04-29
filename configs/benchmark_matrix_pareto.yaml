@@ -1,0 +1,26 @@
+# Pareto sweep (axis 3): all models × {fp32, int8_fp32, int8} × {beam=1, 5} × threads=4 × all dialects.
+# Question: WER vs RTF Pareto curve.
+
+axis: "pareto"
+
+models:
+  - name: "zero-shot-large-v3"
+    path: "openai/whisper-large-v3"
+  - name: "zero-shot-turbo"
+    path: "openai/whisper-large-v3-turbo"
+  - name: "ft-turbo"
+    path: "whisper-faster-turbo-ar-{compute_type}"
+  - name: "ft-large-v3"
+    path: "whisper-faster-large-v3-ar-{compute_type}"
+
+compute_types: ["float32", "int8_float32", "int8"]
+beam_sizes: [1, 5]
+cpu_threads: [4]
+
+test_sets:
+  - { dialect: "msa",       path: "test_sets/test_msa_fleurs_msa_test.jsonl" }
+  - { dialect: "msa",       path: "test_sets/test_msa_casablanca_msa_test.jsonl" }
+  - { dialect: "egyptian",  path: "test_sets/test_egyptian_casablanca_egyptian_test.jsonl" }
+  - { dialect: "levantine", path: "test_sets/test_levantine_casablanca_levantine_test.jsonl" }
+  - { dialect: "gulf",      path: "test_sets/test_gulf_casablanca_gulf_test.jsonl" }
+  - { dialect: "maghrebi",  path: "test_sets/test_maghrebi_casablanca_maghrebi_test.jsonl" }

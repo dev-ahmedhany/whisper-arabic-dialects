@@ -1,0 +1,26 @@
+# Training (GPU side, GCP Vertex AI Workbench L4)
+# Pin majors to keep the QLoRA recipe reproducible.
+transformers>=4.46,<4.50
+datasets>=3.0,<4.0
+accelerate>=1.0,<2.0
+peft>=0.13,<0.16
+bitsandbytes>=0.44,<0.46
+evaluate>=0.4
+jiwer>=3.0
+librosa>=0.10
+soundfile>=0.12
+audiomentations>=0.36
+wandb>=0.18
+scipy>=1.13
+pandas>=2.2
+numpy>=1.26,<2.2
+tqdm>=4.66
+psutil>=6.0
+PyYAML>=6.0
+
+# Conversion + faster-whisper inference
+ctranslate2>=4.4
+faster-whisper>=1.0.3
+
+# Optional GPU-only deps (skip on CPU benchmark image):
+# flash-attn==2.6.3       ; install with: pip install flash-attn --no-build-isolation

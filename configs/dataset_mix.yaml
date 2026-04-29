@@ -1,0 +1,45 @@
+# Dialect-balanced training mix. Hours per dialect should sit within ~2× of each other.
+# `sources` are paths to per-dataset JSONL files produced by scripts/prepare_*.py.
+# Test sources are NOT mixed into train; data_prep.py copies them through verbatim.
+
+train:
+  msa:
+    hours: 12
+    sources:
+      - "test_sets/common_voice_17_ar_train.jsonl"
+  egyptian:
+    hours: 10
+    sources:
+      - "test_sets/mgb3_egyptian_train.jsonl"
+  maghrebi:
+    hours: 10
+    sources:
+      - "test_sets/mgb5_moroccan_train.jsonl"
+  levantine:
+    hours: 9
+    sources:
+      - "test_sets/masc_levantine_train.jsonl"
+      - "test_sets/qasr_levantine_train.jsonl"
+  gulf:
+    hours: 9
+    sources:
+      - "test_sets/sada_saudi_train.jsonl"
+      - "test_sets/qasr_gulf_train.jsonl"
+
+test:
+  msa:
+    sources:
+      - "test_sets/fleurs_msa_test.jsonl"
+      - "test_sets/casablanca_msa_test.jsonl"
+  egyptian:
+    sources:
+      - "test_sets/casablanca_egyptian_test.jsonl"
+  levantine:
+    sources:
+      - "test_sets/casablanca_levantine_test.jsonl"
+  gulf:
+    sources:
+      - "test_sets/casablanca_gulf_test.jsonl"
+  maghrebi:
+    sources:
+      - "test_sets/casablanca_maghrebi_test.jsonl"

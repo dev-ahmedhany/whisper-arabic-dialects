@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+title: >-
+  Production-Aware Fine-Tuning of Whisper Variants for Multi-Dialect Arabic ASR:
+  A Cross-Platform CPU Inference Study
+message: >-
+  If you use this software, the released models, or the accompanying paper,
+  please cite as follows.
+type: software
+authors:
+  - family-names: Hany
+    given-names: Ahmed
+    email: ahmed@hany.dev
+    orcid: "https://orcid.org/0009-0000-8756-9520"
+license: Apache-2.0
+repository-code: "https://github.com/dev-ahmedhany/whisper-arabic-dialects"
+url: "https://github.com/dev-ahmedhany/whisper-arabic-dialects"
+keywords:
+  - speech recognition
+  - whisper
+  - arabic
+  - multi-dialect
+  - QLoRA
+  - fine-tuning
+  - faster-whisper
+  - CTranslate2
+  - cpu inference
+  - benchmarking
+preferred-citation:
+  type: article
+  title: >-
+    Production-Aware Fine-Tuning of Whisper Variants for Multi-Dialect Arabic ASR:
+    A Cross-Platform CPU Inference Study
+  authors:
+    - family-names: Hany
+      given-names: Ahmed
+      email: ahmed@hany.dev
+      orcid: "https://orcid.org/0009-0000-8756-9520"
+  year: 2026
+  notes: Preprint.

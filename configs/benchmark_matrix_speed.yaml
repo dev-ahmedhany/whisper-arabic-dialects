@@ -1,0 +1,21 @@
+# Speed grid (axis 2): all models × int8 × beam=1 × all thread counts × MSA only.
+# Question: how fast can each model go?
+
+axis: "speed"
+
+models:
+  - name: "zero-shot-large-v3"
+    path: "openai/whisper-large-v3"
+  - name: "zero-shot-turbo"
+    path: "openai/whisper-large-v3-turbo"
+  - name: "ft-turbo"
+    path: "whisper-faster-turbo-ar-{compute_type}"
+  - name: "ft-large-v3"
+    path: "whisper-faster-large-v3-ar-{compute_type}"
+
+compute_types: ["int8"]
+beam_sizes: [1]
+cpu_threads: [1, 2, 4, 8]
+
+test_sets:
+  - { dialect: "msa", path: "test_sets/test_msa_fleurs_msa_test.jsonl" }

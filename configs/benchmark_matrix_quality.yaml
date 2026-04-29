@@ -1,0 +1,26 @@
+# Quality grid: all models × all compute × beam=5 × threads=8 × all dialects.
+# Question: what is the best WER each model can achieve on CPU?
+
+axis: "quality"
+
+models:
+  - name: "zero-shot-large-v3"
+    path: "openai/whisper-large-v3"
+  - name: "zero-shot-turbo"
+    path: "openai/whisper-large-v3-turbo"
+  - name: "ft-turbo"
+    path: "whisper-faster-turbo-ar-{compute_type}"
+  - name: "ft-large-v3"
+    path: "whisper-faster-large-v3-ar-{compute_type}"
+
+compute_types: ["float32", "float16", "int8_float32", "int8_float16", "int8"]
+beam_sizes: [5]
+cpu_threads: [8]
+
+test_sets:
+  - { dialect: "msa",       path: "test_sets/test_msa_fleurs_msa_test.jsonl" }
+  - { dialect: "msa",       path: "test_sets/test_msa_casablanca_msa_test.jsonl" }
+  - { dialect: "egyptian",  path: "test_sets/test_egyptian_casablanca_egyptian_test.jsonl" }
+  - { dialect: "levantine", path: "test_sets/test_levantine_casablanca_levantine_test.jsonl" }
+  - { dialect: "gulf",      path: "test_sets/test_gulf_casablanca_gulf_test.jsonl" }
+  - { dialect: "maghrebi",  path: "test_sets/test_maghrebi_casablanca_maghrebi_test.jsonl" }
