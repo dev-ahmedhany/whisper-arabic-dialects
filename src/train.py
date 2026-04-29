@@ -42,9 +42,13 @@ class WhisperDataCollator:
     processor: WhisperProcessor
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
+        # Pad mel features. feature_extractor.pad returns a BatchFeature dict;
+        # in some transformers versions it leaks an `input_ids` key that Whisper's
+        # forward() rejects. Explicitly extract only the field we want.
         input_features = [{"input_features": f["input_features"]} for f in features]
-        batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+        feat_batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
 
+        # Pad labels.
         labels_list = [{"input_ids": f["labels"]} for f in features]
         labels_batch = self.processor.tokenizer.pad(labels_list, return_tensors="pt")
         labels = labels_batch["input_ids"].masked_fill(
@@ -52,8 +56,12 @@ class WhisperDataCollator:
         )
         if (labels[:, 0] == self.processor.tokenizer.bos_token_id).all().cpu().item():
             labels = labels[:, 1:]
-        batch["labels"] = labels
-        return batch
+
+        # Return ONLY what Whisper.forward() accepts — no input_ids leak.
+        return {
+            "input_features": feat_batch["input_features"],
+            "labels": labels,
+        }
 
 
 def _git_commit() -> str:
