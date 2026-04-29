@@ -5,9 +5,9 @@ axis: "speed"
 
 models:
   - name: "zero-shot-large-v3"
-    path: "openai/whisper-large-v3"
+    path: "Systran/faster-whisper-large-v3"
   - name: "zero-shot-turbo"
-    path: "openai/whisper-large-v3-turbo"
+    path: "deepdml/faster-whisper-large-v3-turbo-ct2"
   - name: "ft-turbo"
     path: "whisper-faster-turbo-ar-{compute_type}"
   - name: "ft-large-v3"
