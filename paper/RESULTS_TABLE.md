@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (61 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (71 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _Last refreshed at run-time. WER + CER reported as `point [95% bootstrap CI]` (n=1000 samples). RTF is `compute_seconds / audio_seconds` (lower is better). TTFT-p95 is the 95th-percentile time-to-first-token in milliseconds._
 
@@ -86,7 +86,17 @@ _Last refreshed at run-time. WER + CER reported as `point [95% bootstrap CI]` (n
 | ct2-faster-whisper | zero-shot-turbo | int8_float32 | 1 | 4 | levantine | 100 | 40.3 [36.3, 44.4] | 13.21 [11.28, 15.30] | 0.778 | 3483 ms | 2.23 GB | gcp-c3-standard-8 |
 | ct2-faster-whisper | zero-shot-turbo | int8_float32 | 1 | 4 | maghrebi | 100 | 85.6 [82.6, 88.8] | 43.74 [39.81, 47.67] | 0.986 | 6229 ms | 2.33 GB | gcp-c3-standard-8 |
 | ct2-faster-whisper | zero-shot-turbo | int8_float32 | 1 | 4 | msa | 100 | 10.4 [8.4, 12.4] | 2.81 [2.19, 3.48] | 0.302 | 3714 ms | 2.21 GB | gcp-c3-standard-8 |
+| hf-transformers | zero-shot-base-hf | float32 | 1 | 4 | msa | 50 | 49.0 [43.5, 54.0] | 15.66 [13.41, 18.07] | 0.080 | 1173 ms | 0.75 GB | gcp-c3-standard-8 |
+| hf-transformers | zero-shot-large-v3-turbo-hf | float32 | 1 | 4 | msa | 50 | 9.6 [6.9, 12.7] | 2.56 [1.62, 3.61] | 0.545 | 6351 ms | 3.68 GB | gcp-c3-standard-8 |
+| hf-transformers | zero-shot-medium-hf | float32 | 1 | 4 | msa | 50 | 14.2 [10.9, 17.8] | 4.01 [2.87, 5.44] | 0.543 | 7347 ms | 4.75 GB | gcp-c3-standard-8 |
+| hf-transformers | zero-shot-small-hf | float32 | 1 | 4 | msa | 50 | 25.4 [21.6, 29.1] | 6.78 [5.49, 8.12] | 0.196 | 2709 ms | 1.97 GB | gcp-c3-standard-8 |
+| hf-transformers | zero-shot-tiny-hf | float32 | 1 | 4 | msa | 50 | 64.9 [60.5, 69.3] | 22.42 [20.31, 24.48] | 0.051 | 768 ms | 0.59 GB | gcp-c3-standard-8 |
 | hf-transformers | zero-shot-turbo-hf | float32 | 1 | 8 | msa | 50 | 9.6 [6.9, 12.7] | 2.56 [1.62, 3.61] | 0.364 | 4412 ms | 4.11 GB | gcp-g2-standard-16-cpu |
+| openai-whisper | zero-shot-base-openai | float32 | 1 | 0 | msa | 50 | 47.8 [42.4, 53.0] | 15.73 [13.25, 18.89] | 0.084 | 1210 ms | 0.73 GB | gcp-c3-standard-8 |
+| openai-whisper | zero-shot-large-v3-turbo-openai | float32 | 1 | 0 | msa | 50 | 10.3 [7.3, 13.6] | 2.75 [1.76, 3.83] | 0.547 | 6335 ms | 3.67 GB | gcp-c3-standard-8 |
+| openai-whisper | zero-shot-medium-openai | float32 | 1 | 0 | msa | 50 | 13.8 [10.6, 17.3] | 3.71 [2.77, 4.78] | 0.576 | 7919 ms | 3.57 GB | gcp-c3-standard-8 |
+| openai-whisper | zero-shot-small-openai | float32 | 1 | 0 | msa | 50 | 25.2 [21.6, 28.6] | 6.76 [5.54, 8.03] | 0.209 | 2981 ms | 1.42 GB | gcp-c3-standard-8 |
+| openai-whisper | zero-shot-tiny-openai | float32 | 1 | 0 | msa | 50 | 65.8 [61.6, 70.2] | 22.61 [20.59, 24.59] | 0.048 | 705 ms | 0.59 GB | gcp-c3-standard-8 |
 
 ## Summary by (backend × model) — average across dialects
 
@@ -98,4 +108,14 @@ _Last refreshed at run-time. WER + CER reported as `point [95% bootstrap CI]` (n
 | ct2-faster-whisper | zero-shot-small | 5 | 64.6% | 0.362 | 3514 ms | 2.42 GB |
 | ct2-faster-whisper | zero-shot-tiny | 5 | 86.5% | 0.204 | 1907 ms | 1.69 GB |
 | ct2-faster-whisper | zero-shot-turbo | 5 | 52.4% | 0.805 | 4738 ms | 2.06 GB |
+| hf-transformers | zero-shot-base-hf | 1 | 49.0% | 0.080 | 1173 ms | 0.75 GB |
+| hf-transformers | zero-shot-large-v3-turbo-hf | 1 | 9.6% | 0.545 | 6351 ms | 3.68 GB |
+| hf-transformers | zero-shot-medium-hf | 1 | 14.2% | 0.543 | 7347 ms | 4.75 GB |
+| hf-transformers | zero-shot-small-hf | 1 | 25.4% | 0.196 | 2709 ms | 1.97 GB |
+| hf-transformers | zero-shot-tiny-hf | 1 | 64.9% | 0.051 | 768 ms | 0.59 GB |
 | hf-transformers | zero-shot-turbo-hf | 1 | 9.6% | 0.364 | 4412 ms | 4.11 GB |
+| openai-whisper | zero-shot-base-openai | 1 | 47.8% | 0.084 | 1210 ms | 0.73 GB |
+| openai-whisper | zero-shot-large-v3-turbo-openai | 1 | 10.3% | 0.547 | 6335 ms | 3.67 GB |
+| openai-whisper | zero-shot-medium-openai | 1 | 13.8% | 0.576 | 7919 ms | 3.57 GB |
+| openai-whisper | zero-shot-small-openai | 1 | 25.2% | 0.209 | 2981 ms | 1.42 GB |
+| openai-whisper | zero-shot-tiny-openai | 1 | 65.8% | 0.048 | 705 ms | 0.59 GB |
