@@ -241,7 +241,7 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 | Batch transcription (min avg WER) | min avg WER | zero-shot-large-v3 | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 49.4 [45.4, 53.5] | 1.288 | $0.515/audio-hr |
 | Edge deployment | RAM < 1 GB, avg WER < median | - | - | - | - | - | - | - | - | - |
 | Balanced production | avg RTF < 0.5, max accuracy | zero-shot-small | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 64.5 [60.7, 68.5] | 0.364 | $0.145/audio-hr |
-| Cost-optimized | min $/audio-hr, avg WER < median | zero-shot-turbo | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 52.3 [48.7, 56.3] | 0.818 | $0.327/audio-hr |
+| Cost-optimized | min $/audio-hr, avg WER < median | zero-shot-turbo | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 5 | 52.5 [48.9, 56.4] | 0.792 | $0.317/audio-hr |
 
 ## 11. Error Analysis
 
