@@ -1,0 +1,43 @@
+# Per-dialect specialist: FT-turbo on Egyptian-only training data.
+#
+# Paired with configs/train_turbo.yaml (multi-dialect) to answer the paper's
+# core methodology question: does a single multi-dialect adapter outperform
+# a per-dialect specialist when evaluated on the dialect-specific test set?
+#
+# Train data: MGB-3 Egyptian only (~2,153 rows, ~3.6h audio, 95% train / 5% val
+# split deterministically with seed=42 by scripts/prep_per_dialect_split.py).
+
+model_name: "openai/whisper-large-v3-turbo"
+language: "arabic"
+task: "transcribe"
+attn_implementation: "flash_attention_2"
+
+train_jsonl: "test_sets/eg_train.jsonl"
+val_jsonl: "test_sets/eg_val.jsonl"
+
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target_modules: ["q_proj", "v_proj", "k_proj", "out_proj", "fc1", "fc2"]
+
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+warmup_ratio: 0.1
+num_train_epochs: 3
+optim: "paged_adamw_8bit"
+gradient_checkpointing: false
+
+eval_steps: 200
+save_steps: 200
+save_total_limit: 3
+logging_steps: 25
+generation_max_length: 225
+seed: 42
+
+output_dir: "checkpoints/whisper-turbo-ar-egyptian-lora"
+run_name: "whisper-turbo-ar-egyptian-lora-v1"
+report_to: []
+wandb_project: "whisper-arabic-ft"
+wandb_tags: ["turbo", "qlora", "per-dialect", "egyptian"]
