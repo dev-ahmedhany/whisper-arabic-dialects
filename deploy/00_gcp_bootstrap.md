@@ -68,7 +68,8 @@ gcloud services enable \
   storage.googleapis.com \
   artifactregistry.googleapis.com \
   iam.googleapis.com \
-  cloudbuild.googleapis.com
+  cloudbuild.googleapis.com \
+  billingbudgets.googleapis.com
 ```
 
 Why each:
@@ -81,12 +82,13 @@ Why each:
 | `artifactregistry.googleapis.com` | Docker image registry for the CPU benchmark image |
 | `iam.googleapis.com` | Service accounts and instance permissions |
 | `cloudbuild.googleapis.com` | Optional — server-side `docker build` if you don't want to build locally |
+| `billingbudgets.googleapis.com` | Step 7 budget alert via `gcloud billing budgets create` |
 
 Verify:
 
 ```bash
 gcloud services list --enabled \
-  --filter="config.name:(compute.googleapis.com OR notebooks.googleapis.com OR aiplatform.googleapis.com OR storage.googleapis.com OR artifactregistry.googleapis.com OR iam.googleapis.com OR cloudbuild.googleapis.com)" \
+  --filter="config.name:(compute.googleapis.com OR notebooks.googleapis.com OR aiplatform.googleapis.com OR storage.googleapis.com OR artifactregistry.googleapis.com OR iam.googleapis.com OR cloudbuild.googleapis.com OR billingbudgets.googleapis.com)" \
   --format="table(config.name)"
 ```
 
@@ -132,14 +134,31 @@ You cannot proceed to `deploy/02_gcp_training.md` until both quotas are at least
 
 ## Step 7 — Set up a budget alert
 
+The budget caps spend awareness — the safety net against forgetting to stop a `g2-standard-16` over a weekend.
+
 ```bash
-# Find your billing account id
-gcloud billing accounts list --format="value(name)"
+# Read the billing-account id off the linked project
+BILLING_ACCT=$(gcloud billing projects describe "$PROJECT_ID" \
+  --format="value(billingAccountName)" | sed 's|billingAccounts/||')
+echo "$BILLING_ACCT"   # expect XXXXXX-XXXXXX-XXXXXX
+
+# Create a $150 budget scoped to this project, alerts at 50%, 90%, 100%
+gcloud billing budgets create \
+  --billing-account="$BILLING_ACCT" \
+  --display-name="whisper-arabic" \
+  --budget-amount=150USD \
+  --threshold-rule=percent=0.5 \
+  --threshold-rule=percent=0.9 \
+  --threshold-rule=percent=1.0 \
+  --filter-projects=projects/"$PROJECT_ID"
+
+# Verify
+gcloud billing budgets list --billing-account="$BILLING_ACCT" \
+  --format="value(displayName,amount.specifiedAmount.units)"
+# expect: whisper-arabic  150
 ```
 
-Then in the Console: Billing → Budgets & alerts → Create Budget → name "whisper-arabic" → scope to project `brain-tumor-73704` → amount `$150` → alerts at 50% / 90% / 100% by email.
-
-This is the safety net against forgetting to stop a `g2-standard-16` over a weekend.
+Alerts go to the billing-account admin email by default. Add other recipients in the Console (Billing → Budgets & alerts → click the budget → Manage notifications).
 
 ## What you have after this runbook
 
