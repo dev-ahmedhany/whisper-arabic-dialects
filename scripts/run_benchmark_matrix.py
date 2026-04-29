@@ -85,7 +85,14 @@ def main() -> None:
                    help="print cells without running")
     p.add_argument("--include-models", nargs="+", default=None,
                    help="restrict to a subset of model names from the config")
+    p.add_argument("--shard", type=int, default=0,
+                   help="this instance's shard index (0-based); use with --num-shards")
+    p.add_argument("--num-shards", type=int, default=1,
+                   help="total number of shards; cells are assigned round-robin by index")
     args = p.parse_args()
+
+    if args.num_shards < 1 or args.shard < 0 or args.shard >= args.num_shards:
+        raise SystemExit(f"invalid sharding: shard={args.shard} of num_shards={args.num_shards}")
 
     cfg = yaml.safe_load(args.config.read_text())
     seen = _existing_keys(args.output_log)
@@ -93,7 +100,10 @@ def main() -> None:
     all_cells = list(_iter_cells(cfg))
     if args.include_models:
         all_cells = [c for c in all_cells if c[0]["name"] in args.include_models]
-    print(f"[info] {len(all_cells)} cells in matrix; {len(seen)} already logged")
+    if args.num_shards > 1:
+        all_cells = [c for i, c in enumerate(all_cells) if i % args.num_shards == args.shard]
+    print(f"[info] shard {args.shard}/{args.num_shards}: "
+          f"{len(all_cells)} cells in matrix; {len(seen)} already logged")
 
     n_run = 0
     n_skip = 0

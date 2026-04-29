@@ -84,22 +84,25 @@ class _PeakMemorySampler(threading.Thread):
     def __init__(self, interval_s: float = 0.1):
         super().__init__(daemon=True)
         self.interval_s = interval_s
-        self._stop = threading.Event()
+        # NOT `self._stop` — that name shadows threading.Thread._stop, a private
+        # method CPython calls internally on thread shutdown. Shadowing it with
+        # an Event raises "'Event' object is not callable" at exit.
+        self._stop_event = threading.Event()
         self._proc = psutil.Process(os.getpid())
         self.peak_mb = self._proc.memory_info().rss / (1024 * 1024)
 
     def run(self) -> None:
-        while not self._stop.is_set():
+        while not self._stop_event.is_set():
             try:
                 rss_mb = self._proc.memory_info().rss / (1024 * 1024)
                 if rss_mb > self.peak_mb:
                     self.peak_mb = rss_mb
             except psutil.Error:
                 pass
-            self._stop.wait(self.interval_s)
+            self._stop_event.wait(self.interval_s)
 
     def stop(self) -> float:
-        self._stop.set()
+        self._stop_event.set()
         self.join(timeout=2.0)
         return self.peak_mb
 
