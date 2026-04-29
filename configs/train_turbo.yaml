@@ -1,12 +1,16 @@
 # QLoRA fine-tune of whisper-large-v3-turbo on dialect-balanced Arabic.
+# Maghrebi is excluded from the training mix (see §3 Methodology and
+# memory/maghrebi_excluded.md) — Whisper has insufficient Moroccan/Algerian
+# Arabic in pretraining (84.7% zero-shot WER at large-v3 int8) for FT to
+# bring it within range of the other dialects.
 
 model_name: "openai/whisper-large-v3-turbo"
 language: "arabic"
 task: "transcribe"
 attn_implementation: "sdpa"
 
-train_jsonl: "test_sets/train.jsonl"
-val_jsonl: "test_sets/val.jsonl"
+train_jsonl: "test_sets/train_no_maghrebi.jsonl"
+val_jsonl: "test_sets/val_no_maghrebi.jsonl"
 
 # LoRA
 lora_r: 32

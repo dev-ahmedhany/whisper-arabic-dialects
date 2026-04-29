@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (85 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (112 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_seconds / audio_seconds (lower is better). TTFT-p95 is 95th-percentile time-to-first-token in milliseconds._
 
@@ -25,6 +25,21 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 75.2 [71.2, 79.2] | 32.84 [30.02, 35.93] | 0.149 | 2088 ms | 0.65 GB |
 | maghrebi | 100 | 95.5 [93.9, 97.0] | 51.16 [48.71, 53.72] | 0.382 | 3757 ms | 0.75 GB |
 | msa | 100 | 51.2 [47.6, 55.1] | 16.51 [14.83, 18.57] | 0.050 | 617 ms | 0.61 GB |
+
+### ct2-faster-whisper · zero-shot-base · int8  _(beam=3, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| gulf | 100 | 84.1 [81.0, 87.1] | 40.12 [37.21, 43.64] | 0.346 | 3698 ms | 0.73 GB |
+| levantine | 100 | 72.4 [68.1, 77.0] | 30.95 [27.83, 34.15] | 0.197 | 2428 ms | 0.73 GB |
+| msa | 100 | 48.2 [44.8, 52.1] | 15.45 [13.86, 17.29] | 0.069 | 953 ms | 0.70 GB |
+
+### ct2-faster-whisper · zero-shot-base · int8  _(beam=5, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| gulf | 100 | 85.5 [82.0, 89.3] | 39.33 [36.19, 42.71] | 0.322 | 3565 ms | 0.75 GB |
+| msa | 100 | 47.8 [44.4, 51.6] | 14.96 [13.41, 16.78] | 0.072 | 1003 ms | 0.61 GB |
 
 ### ct2-faster-whisper · zero-shot-base · int8_float32  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -94,6 +109,18 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 |---|---|---|---|---|---|---|
 | msa | 100 | 26.7 [23.7, 30.0] | 7.76 [6.51, 9.13] | 0.210 | 2968 ms | 1.58 GB |
 
+### ct2-faster-whisper · zero-shot-small · int8  _(beam=1, threads=2, hetzner-cax11)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 26.8 [23.8, 30.5] | 7.81 [6.56, 9.30] | 0.586 | 8248 ms | 0.95 GB |
+
+### ct2-faster-whisper · zero-shot-small · int8  _(beam=1, threads=2, hetzner-cx23)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 27.0 [23.9, 30.7] | 7.87 [6.63, 9.31] | 0.342 | 4779 ms | 0.87 GB |
+
 ### ct2-faster-whisper · zero-shot-small · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
@@ -103,6 +130,12 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 56.8 [52.8, 61.2] | 21.73 [19.13, 24.23] | 0.270 | 1704 ms | 1.35 GB |
 | maghrebi | 100 | 89.1 [86.5, 91.8] | 44.14 [40.93, 47.57] | 0.553 | 6828 ms | 2.04 GB |
 | msa | 100 | 27.4 [24.3, 31.0] | 7.95 [6.74, 9.33] | 0.115 | 1643 ms | 1.09 GB |
+
+### ct2-faster-whisper · zero-shot-small · int8  _(beam=3, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| gulf | 100 | 69.7 [65.6, 73.8] | 28.19 [25.61, 31.23] | 0.464 | 3506 ms | 1.38 GB |
 
 ### ct2-faster-whisper · zero-shot-small · int8_float32  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -120,6 +153,18 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 |---|---|---|---|---|---|---|
 | msa | 100 | 67.0 [63.8, 70.4] | 24.37 [22.30, 26.67] | 0.097 | 1335 ms | 0.46 GB |
 
+### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=1, threads=2, hetzner-cax11)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 66.0 [62.5, 69.6] | 24.16 [22.21, 26.17] | 0.148 | 2413 ms | 0.38 GB |
+
+### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=1, threads=2, hetzner-cx23)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 68.7 [65.5, 72.4] | 25.77 [23.36, 28.83] | 0.090 | 1505 ms | 0.36 GB |
+
 ### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
@@ -129,6 +174,23 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | levantine | 100 | 84.0 [80.6, 87.4] | 39.10 [36.55, 41.73] | 0.157 | 1608 ms | 0.37 GB |
 | maghrebi | 100 | 97.1 [95.5, 99.2] | 53.69 [51.10, 56.49] | 0.269 | 2188 ms | 0.43 GB |
 | msa | 100 | 66.6 [63.2, 70.7] | 24.34 [22.31, 26.53] | 0.030 | 764 ms | 0.38 GB |
+
+### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=3, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| egyptian | 100 | 93.9 [91.4, 96.2] | 54.67 [51.01, 58.51] | 0.357 | 2924 ms | 0.52 GB |
+| levantine | 100 | 81.5 [78.2, 84.6] | 37.89 [35.06, 40.58] | 0.178 | 2228 ms | 0.51 GB |
+| maghrebi | 100 | 96.2 [94.7, 97.7] | 53.39 [51.22, 55.52] | 0.278 | 2712 ms | 0.53 GB |
+| msa | 100 | 62.5 [59.2, 66.3] | 22.01 [20.10, 24.25] | 0.043 | 569 ms | 0.52 GB |
+
+### ct2-faster-whisper · zero-shot-tiny · int8  _(beam=5, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| egyptian | 100 | 92.2 [89.7, 94.8] | 53.36 [49.45, 57.49] | 0.356 | 2991 ms | 0.51 GB |
+| levantine | 100 | 81.6 [77.9, 85.1] | 37.83 [34.63, 40.84] | 0.179 | 2057 ms | 0.51 GB |
+| maghrebi | 100 | 97.3 [95.0, 100.3] | 53.98 [51.38, 56.57] | 0.292 | 3020 ms | 0.51 GB |
 
 ### ct2-faster-whisper · zero-shot-tiny · int8_float32  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -145,6 +207,18 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
 | msa | 100 | 10.0 [8.1, 12.2] | 2.91 [2.21, 3.66] | 0.688 | 8286 ms | 4.66 GB |
+
+### ct2-faster-whisper · zero-shot-turbo · int8  _(beam=1, threads=2, hetzner-cax11)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 10.3 [8.3, 12.4] | 2.87 [2.18, 3.59] | 1.888 | 22994 ms | 2.08 GB |
+
+### ct2-faster-whisper · zero-shot-turbo · int8  _(beam=1, threads=2, hetzner-cx23)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| msa | 100 | 10.7 [8.7, 12.8] | 2.93 [2.26, 3.63] | 1.161 | 14157 ms | 2.08 GB |
 
 ### ct2-faster-whisper · zero-shot-turbo · int8  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -171,6 +245,18 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
 | msa | 50 | 49.0 [43.5, 54.0] | 15.66 [13.41, 18.07] | 0.080 | 1173 ms | 0.75 GB |
+
+### hf-transformers · zero-shot-base-hf · float32  _(beam=3, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| levantine | 100 | 148.2 [92.1, 216.9] | 115.10 [57.70, 179.44] | 0.350 | 9848 ms | 0.97 GB |
+
+### hf-transformers · zero-shot-base-hf · float32  _(beam=5, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| maghrebi | 100 | 265.2 [186.1, 353.9] | 203.61 [138.24, 275.45] | 0.974 | 15534 ms | 1.07 GB |
 
 ### hf-transformers · zero-shot-large-v3-hf · float32  _(beam=1, threads=4, gcp-c3-standard-8)_
 
@@ -201,6 +287,22 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
 | msa | 50 | 64.9 [60.5, 69.3] | 22.42 [20.31, 24.48] | 0.051 | 768 ms | 0.59 GB |
+
+### hf-transformers · zero-shot-tiny-hf · float32  _(beam=3, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| egyptian | 100 | 415.9 [289.6, 566.8] | 390.23 [278.85, 526.54] | 0.541 | 6057 ms | 0.71 GB |
+| gulf | 100 | 302.8 [203.9, 434.0] | 234.81 [151.00, 341.65] | 0.338 | 5943 ms | 0.74 GB |
+| maghrebi | 100 | 187.2 [126.1, 259.9] | 150.63 [96.81, 212.96] | 0.274 | 5967 ms | 0.73 GB |
+| msa | 100 | 67.9 [58.7, 80.2] | 28.91 [20.21, 41.43] | 0.093 | 1602 ms | 0.71 GB |
+
+### hf-transformers · zero-shot-tiny-hf · float32  _(beam=5, threads=4, gcp-c3-standard-8)_
+
+| dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
+|---|---|---|---|---|---|---|
+| egyptian | 100 | 558.9 [409.8, 722.1] | 486.96 [357.15, 629.32] | 0.979 | 9351 ms | 0.79 GB |
+| maghrebi | 100 | 288.7 [200.1, 399.0] | 218.46 [146.75, 303.69] | 0.577 | 9418 ms | 0.78 GB |
 
 ### hf-transformers · zero-shot-turbo-hf · float32  _(beam=1, threads=8, gcp-g2-standard-16-cpu)_
 
@@ -284,18 +386,18 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 
 | backend | model | n_cells | avg WER | avg RTF | avg TTFT_p95 | avg RAM |
 |---|---|---|---|---|---|---|
-| ct2-faster-whisper | zero-shot-base | 5 | 76.8% | 0.250 | 2683 ms | 1.84 GB |
+| ct2-faster-whisper | zero-shot-base | 5 | 73.9% | 0.235 | 2573 ms | 1.48 GB |
 | ct2-faster-whisper | zero-shot-large-v3 | 5 | 45.7% | 1.252 | 8403 ms | 6.05 GB |
 | ct2-faster-whisper | zero-shot-medium | 5 | 51.1% | 0.871 | 7854 ms | 4.01 GB |
-| ct2-faster-whisper | zero-shot-small | 5 | 61.2% | 0.349 | 3464 ms | 2.34 GB |
-| ct2-faster-whisper | zero-shot-tiny | 5 | 84.7% | 0.194 | 1855 ms | 1.57 GB |
-| ct2-faster-whisper | zero-shot-turbo | 5 | 48.5% | 0.794 | 5061 ms | 2.29 GB |
-| hf-transformers | zero-shot-base-hf | 1 | 49.0% | 0.080 | 1173 ms | 0.75 GB |
+| ct2-faster-whisper | zero-shot-small | 5 | 56.9% | 0.373 | 3903 ms | 2.07 GB |
+| ct2-faster-whisper | zero-shot-tiny | 5 | 83.6% | 0.203 | 2041 ms | 1.08 GB |
+| ct2-faster-whisper | zero-shot-turbo | 5 | 42.7% | 0.906 | 7140 ms | 2.26 GB |
+| hf-transformers | zero-shot-base-hf | 3 | 154.1% | 0.468 | 8852 ms | 0.93 GB |
 | hf-transformers | zero-shot-large-v3-hf | 1 | 8.7% | 0.954 | 12670 ms | 7.64 GB |
 | hf-transformers | zero-shot-large-v3-turbo-hf | 1 | 9.6% | 0.545 | 6351 ms | 3.68 GB |
 | hf-transformers | zero-shot-medium-hf | 1 | 14.2% | 0.543 | 7347 ms | 4.75 GB |
 | hf-transformers | zero-shot-small-hf | 1 | 25.4% | 0.196 | 2709 ms | 1.97 GB |
-| hf-transformers | zero-shot-tiny-hf | 1 | 64.9% | 0.051 | 768 ms | 0.59 GB |
+| hf-transformers | zero-shot-tiny-hf | 4 | 269.5% | 0.408 | 5587 ms | 0.72 GB |
 | hf-transformers | zero-shot-turbo-hf | 1 | 9.6% | 0.364 | 4412 ms | 4.11 GB |
 | openai-whisper | zero-shot-base-openai | 1 | 47.8% | 0.084 | 1210 ms | 0.73 GB |
 | openai-whisper | zero-shot-large-v3-openai | 1 | 8.4% | 1.014 | 13584 ms | 6.72 GB |
