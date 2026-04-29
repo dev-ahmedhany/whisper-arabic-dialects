@@ -132,6 +132,33 @@ Cells are sampled from a four-axis sweep (no full Cartesian product) defined by 
 - **Thread scaling** (`configs/benchmark_matrix_threads.yaml`): best config × {1, 2, 4, 8} threads × MSA only.
 - **Cross-platform replay**: smart subset re-run on Hetzner CX53.
 
+### 3.7 Quantization Choice: int8 vs int8_float32
+
+CTranslate2 exposes two int8 variants that differ in the activation precision: `int8` keeps activations in int8 between matmuls, while `int8_float32` dequantizes activations back to fp32 between layers. The fp32-activation variant is widely assumed to be the "safer" choice on the theory that it should produce better WER. We tested that assumption directly across **30 paired cells** (all 6 Whisper variants × 5 dialects, beam=1, threads=4, c3-standard-8):
+
+| Metric | int8 | int8_float32 | Delta |
+|---|---|---|---|
+| mean WER (paired) | — | — | **+0.11 pp** |
+| median WER delta | | | 0.00 pp |
+| max single-cell WER delta | | | 1.21 pp (small / Egyptian) |
+| mean peak RAM | **2.26 GB** | 3.70 GB | +1.44 GB (+63%) |
+| mean RTF | 0.642 | 0.627 | −15 ms / s of audio |
+
+Per-model RAM overhead is largest where it hurts most — the small variants:
+
+| Model | int8 RAM | int8_float32 RAM | overhead |
+|---|---|---|---|
+| tiny | 0.40 GB | 2.97 GB | +642% |
+| base | 0.67 GB | 3.21 GB | +377% |
+| small | 1.46 GB | 3.37 GB | +130% |
+| medium | 3.63 GB | 4.32 GB | +19% |
+| large-v3 | 5.97 GB | 6.46 GB | +8% |
+| turbo | 1.85 GB | 2.26 GB | +22% |
+
+The fp32-activation buffer is a fixed cost that dominates the smaller models' weight savings. WER differences are inside the bootstrap CIs of the individual cells; the median delta of zero confirms there is no systematic accuracy advantage to fp32 activations on Whisper inference. The −15 ms/s RTF win for `int8_float32` is real but small (~1.5%).
+
+**We default to `int8` for all subsequent CT2 cells**, and `int8_float32` is reported only when the platform lacks AVX-512 VNNI for native int8 matmul (Hetzner cross-platform replay, §9). The headline-table CT2 numbers throughout this paper are `int8`.
+
 ---
 
 ## 4. Zero-Shot Baselines
