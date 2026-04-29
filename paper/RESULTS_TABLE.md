@@ -1,6 +1,6 @@
 # All Benchmark Results (browsing view)
 
-Auto-generated from `runs/results.jsonl` (79 rows). Re-run `python -m src.render_results_md` to refresh.
+Auto-generated from `runs/results.jsonl` (81 rows). Re-run `python -m src.render_results_md` to refresh.
 
 _WER + CER reported as `point [95% bootstrap CI]` (n=1000). RTF = compute_seconds / audio_seconds (lower is better). TTFT-p95 is 95th-percentile time-to-first-token in milliseconds._
 
@@ -189,12 +189,14 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
 | msa | 50 | 10.3 [7.3, 13.6] | 2.75 [1.76, 3.83] | 0.547 | 6335 ms | 3.67 GB |
+| msa | 50 | 10.3 [7.3, 13.6] | 2.75 [1.76, 3.83] | 0.550 | 6427 ms | 3.66 GB |
 
 ### openai-whisper · zero-shot-medium-openai · float32  _(beam=1, threads=0, gcp-c3-standard-8)_
 
 | dialect | n | WER | CER | RTF | TTFT_p95 | Peak RAM |
 |---|---|---|---|---|---|---|
 | msa | 50 | 13.8 [10.6, 17.3] | 3.71 [2.77, 4.78] | 0.576 | 7919 ms | 3.57 GB |
+| msa | 50 | 13.8 [10.6, 17.3] | 3.71 [2.77, 4.78] | 0.579 | 7959 ms | 3.56 GB |
 
 ### openai-whisper · zero-shot-small-openai · float32  _(beam=1, threads=0, gcp-c3-standard-8)_
 
@@ -263,8 +265,8 @@ Each section header is `backend · model · compute (beam=B, threads=T, platform
 | hf-transformers | zero-shot-turbo-hf | 1 | 9.6% | 0.364 | 4412 ms | 4.11 GB |
 | openai-whisper | zero-shot-base-openai | 1 | 47.8% | 0.084 | 1210 ms | 0.73 GB |
 | openai-whisper | zero-shot-large-v3-openai | 1 | 8.4% | 1.014 | 13584 ms | 6.72 GB |
-| openai-whisper | zero-shot-large-v3-turbo-openai | 1 | 10.3% | 0.547 | 6335 ms | 3.67 GB |
-| openai-whisper | zero-shot-medium-openai | 1 | 13.8% | 0.576 | 7919 ms | 3.57 GB |
+| openai-whisper | zero-shot-large-v3-turbo-openai | 1 | 10.3% | 0.548 | 6381 ms | 3.66 GB |
+| openai-whisper | zero-shot-medium-openai | 1 | 13.8% | 0.577 | 7939 ms | 3.57 GB |
 | openai-whisper | zero-shot-small-openai | 1 | 25.2% | 0.209 | 2981 ms | 1.42 GB |
 | openai-whisper | zero-shot-tiny-openai | 1 | 65.8% | 0.048 | 705 ms | 0.59 GB |
 | whisper.cpp | zero-shot-base-cpp | 1 | 50.8% | 0.183 | 2120 ms | 0.24 GB |
