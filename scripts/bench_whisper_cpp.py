@@ -47,8 +47,9 @@ def main() -> None:
                    choices=["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"],
                    help="whisper.cpp model size (downloads GGML file on first use)")
     p.add_argument("--quantization", default="q5_0",
-                   choices=["q4_0", "q5_0", "q8_0", "fp16", "fp32"],
-                   help="GGML quantization level")
+                   choices=["q4_0", "q5_0", "q5_1", "q8_0", "fp16", "fp32"],
+                   help="GGML quantization level (pywhispercpp ships q5_1 for "
+                        "tiny/base/small and q5_0 for medium/large)")
     p.add_argument("--test-set", required=True, type=Path)
     p.add_argument("--dialect", required=True)
     p.add_argument("--platform-label", required=True)
