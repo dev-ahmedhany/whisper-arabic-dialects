@@ -73,8 +73,8 @@ Training mix targets ~50 hours, balanced so no dialect dominates more than ~2× 
 | train | MGB-5 | Moroccan | ~10 |
 | train | MASC | Levantine | ~9 |
 | train | *(no Gulf-specific corpus — see §12 Limitations)* | Gulf | 0 |
-| test  | FLEURS (ar) | MSA, dialect-tagged | full split |
-| test  | Casablanca (per-dialect) | MSA, EG, LV, GLF, MAG | 300–500 utterances per dialect |
+| test  | FLEURS (ar_eg) | MSA | full split |
+| test  | Casablanca (Egypt / Morocco / Jordan / UAE configs) | EG / MAG / LV / GLF | up to 500 utterances per dialect |
 
 Dataset preparation (`scripts/prepare_*.py`) emits a uniform per-row JSONL schema (`audio`, `reference`, `dialect`, `source_dataset`, `duration_s`); `src/data_prep.py` then assembles the dialect-balanced train/val splits per `configs/dataset_mix.yaml`.
 

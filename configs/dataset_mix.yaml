@@ -36,17 +36,16 @@ train:
 test:
   msa:
     sources:
-      - "test_sets/fleurs_msa_test.jsonl"
-      - "test_sets/casablanca_msa_test.jsonl"
+      - "test_sets/fleurs_msa_test.jsonl"   # Casablanca has no MSA section
   egyptian:
     sources:
-      - "test_sets/casablanca_egyptian_test.jsonl"
+      - "test_sets/casablanca_egyptian_test.jsonl"   # Egypt config
   levantine:
     sources:
-      - "test_sets/casablanca_levantine_test.jsonl"
+      - "test_sets/casablanca_levantine_test.jsonl"  # Jordan config
   gulf:
     sources:
-      - "test_sets/casablanca_gulf_test.jsonl"
+      - "test_sets/casablanca_gulf_test.jsonl"       # UAE config
   maghrebi:
     sources:
-      - "test_sets/casablanca_maghrebi_test.jsonl"
+      - "test_sets/casablanca_maghrebi_test.jsonl"   # Morocco config

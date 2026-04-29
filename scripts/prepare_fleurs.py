@@ -25,6 +25,7 @@ def main() -> None:
         text_fn=lambda r: r.get("transcription", ""),
         dialect="msa",
         max_samples=args.max_samples,
+        trust_remote_code=True,
     )
     print(f"wrote {n} rows to {args.out}")
 
