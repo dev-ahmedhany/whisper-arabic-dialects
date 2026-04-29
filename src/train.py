@@ -148,6 +148,21 @@ def main() -> None:
         bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=True,
     )
+    # PEFT's PeftModelForSeq2SeqLM.forward unconditionally passes input_ids to
+    # base_model.forward(), but WhisperForConditionalGeneration.forward() does
+    # not accept input_ids (Whisper uses input_features for mel spectrograms).
+    # Monkey-patch Whisper.forward to silently drop a None input_ids kwarg so
+    # the PEFT wrapper composes cleanly. Active for the entire process lifetime.
+    if not getattr(WhisperForConditionalGeneration.forward, "_input_ids_patched", False):
+        _orig_whisper_forward = WhisperForConditionalGeneration.forward
+
+        def _whisper_forward_drop_input_ids(self, *args, **kwargs):
+            kwargs.pop("input_ids", None)
+            return _orig_whisper_forward(self, *args, **kwargs)
+
+        _whisper_forward_drop_input_ids._input_ids_patched = True
+        WhisperForConditionalGeneration.forward = _whisper_forward_drop_input_ids
+
     model = WhisperForConditionalGeneration.from_pretrained(
         model_name,
         quantization_config=bnb,
