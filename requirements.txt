@@ -1,10 +1,13 @@
 # Training (GPU side, GCP Vertex AI Workbench L4)
 # Pin majors to keep the QLoRA recipe reproducible.
-transformers>=4.46,<4.50
+# Pinned to versions where Whisper QLoRA training is known to work:
+# 4.49 + peft 0.15 raises 'WhisperForConditionalGeneration.forward() got
+# unexpected keyword argument input_ids' even with the data-collator fix.
+transformers==4.46.3
 datasets>=3.0,<4.0
 accelerate>=1.0,<2.0
-peft>=0.13,<0.16
-bitsandbytes>=0.44,<0.46
+peft==0.13.2
+bitsandbytes>=0.45,<0.50
 evaluate>=0.4
 jiwer>=3.0
 librosa>=0.10
