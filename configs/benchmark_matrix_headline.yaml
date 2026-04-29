@@ -9,6 +9,18 @@
 axis: "headline"
 
 models:
+  # Full Whisper family in zero-shot — gives a complete cost/quality picture for
+  # Arabic ASR before fine-tuning. Smaller models almost certainly fail the
+  # quality floor in Table 6 but their RTF/cost numbers are interesting context
+  # and let the paper claim a complete comparison.
+  - name: "zero-shot-tiny"
+    path: "Systran/faster-whisper-tiny"
+  - name: "zero-shot-base"
+    path: "Systran/faster-whisper-base"
+  - name: "zero-shot-small"
+    path: "Systran/faster-whisper-small"
+  - name: "zero-shot-medium"
+    path: "Systran/faster-whisper-medium"
   - name: "zero-shot-large-v3"
     path: "Systran/faster-whisper-large-v3"
   - name: "zero-shot-turbo"
