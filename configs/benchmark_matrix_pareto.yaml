@@ -19,7 +19,6 @@ cpu_threads: [4]
 
 test_sets:
   - { dialect: "msa",       path: "test_sets/test_msa_fleurs_msa_test.jsonl" }
-  - { dialect: "msa",       path: "test_sets/test_msa_casablanca_msa_test.jsonl" }
   - { dialect: "egyptian",  path: "test_sets/test_egyptian_casablanca_egyptian_test.jsonl" }
   - { dialect: "levantine", path: "test_sets/test_levantine_casablanca_levantine_test.jsonl" }
   - { dialect: "gulf",      path: "test_sets/test_gulf_casablanca_gulf_test.jsonl" }
