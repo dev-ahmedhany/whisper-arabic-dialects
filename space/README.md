@@ -8,7 +8,7 @@ sdk_version: 4.44.0
 app_file: app.py
 pinned: false
 license: mit
-short_description: Try our fine-tuned Whisper Arabic side-by-side with zero-shot
+short_description: Zero-shot vs fine-tuned Whisper on Arabic dialects
 ---
 
 # Whisper-large-v3-turbo — Arabic 4-dialect Fine-Tune (interactive demo)
