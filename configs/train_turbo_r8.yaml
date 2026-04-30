@@ -27,7 +27,7 @@ warmup_ratio: 0.1
 num_train_epochs: 10               # ceiling; early-stop will halt earlier
 max_steps: 10000                   # ~9.3 epochs at effective batch 16, 17246 train rows
 optim: "paged_adamw_8bit"
-gradient_checkpointing: false
+gradient_checkpointing: true     # transformers 5.x has higher activation memory; off OOMs the L4
 
 # Early stopping on val WER plateau. The r=32 run plateaued at val WER ~33%
 # by step 2000-3000; we let the model run further but stop after 4 consecutive
