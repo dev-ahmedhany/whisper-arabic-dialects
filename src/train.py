@@ -190,7 +190,11 @@ def main() -> None:
     model.generation_config.task = cfg.get("task", "transcribe")
     model.generation_config.forced_decoder_ids = None
 
-    model = prepare_model_for_kbit_training(model)
+    # peft >= 0.13 enables gradient_checkpointing by default which roughly halves
+    # train throughput. Honor the YAML's gradient_checkpointing flag instead.
+    model = prepare_model_for_kbit_training(
+        model, use_gradient_checkpointing=cfg.get("gradient_checkpointing", False)
+    )
 
     lora = LoraConfig(
         r=cfg["lora_r"],
