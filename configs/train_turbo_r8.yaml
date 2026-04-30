@@ -9,8 +9,8 @@ language: "arabic"
 task: "transcribe"
 attn_implementation: "sdpa"
 
-train_jsonl: "test_sets/train_no_maghrebi.jsonl"
-val_jsonl: "test_sets/val_no_maghrebi.jsonl"
+train_jsonl: "test_sets/train_v2.jsonl"
+val_jsonl: "test_sets/val_v2.jsonl"
 
 # LoRA
 lora_r: 8
