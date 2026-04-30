@@ -4,6 +4,32 @@ Production-aware multi-dialect Arabic ASR via parameter-efficient fine-tuning of
 
 The paper draft is in [`paper/paper.md`](paper/paper.md). Deployment runbooks for GCP training and CPU benchmarking on GCP + Hetzner are in [`deploy/`](deploy/).
 
+## Released artifacts
+
+- 🤗 **LoRA adapter** (~111 MB, for further FT): https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft-lora
+- 🤗 **Merged HF model** (~3 GB, ready to use with `transformers`): https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft
+- 🤗 **Interactive demo** (Gradio Space, side-by-side vs zero-shot): https://huggingface.co/spaces/dev-ahmedhany/whisper-arabic-dialects
+- 🌐 **Project case study**: https://hany.dev/case-studies/whisper-arabic-dialects
+
+## Headline results
+
+Held-out test sets (n=100 per dialect, beam=1, deterministic Arabic normalizer in `src/normalization.py`).
+Zero-shot is `openai/whisper-large-v3-turbo` (CT2 int8). Fine-tuned is this work, evaluated as PEFT bf16 GPU.
+
+| Dialect | Test source | Zero-shot WER | **Fine-tuned WER** | Δ |
+|---|---|---:|---:|---:|
+| MSA | FLEURS Arabic | 10.4% | 11.5% | +1.1 pp ⚠️ |
+| Egyptian | Casablanca | 65.0% | 62.7% | **−2.3 pp** ✅ |
+| Levantine | Casablanca | 40.3% | 51.9% | +11.6 pp ⚠️ |
+| Gulf | Casablanca | 61.1% | 58.6% | **−2.5 pp** ✅ |
+| **avg (4 dialects)** | | **44.2%** | **46.2%** | +2.0 pp |
+
+Maghrebi is excluded (84.7% zero-shot WER — Whisper has insufficient Moroccan/Algerian Arabic in pretraining for QLoRA to recover within budget; see paper §3 / §6.1).
+
+The val WER during training reaches **33.10%** on a held-out slice of the training-source distribution. The held-out test WER above is higher because the test sets are from **different sources** than training (FLEURS vs Common Voice for MSA, Casablanca vs MGB-3 / MASC for dialects), exposing domain mismatch — itself a paper finding (§6.1).
+
+The v1 fine-tune is **not a strict improvement** over zero-shot. It trades a ~1 pp MSA regression and a substantial Levantine regression for −2.5 pp on Egyptian and Gulf. A v2 with lower-rank LoRA (r=8 α=16) and Casablanca train splits is in progress to address the Levantine regression and the int8 quantization sensitivity (paper §6.2).
+
 ## Quickstart
 
 ```bash

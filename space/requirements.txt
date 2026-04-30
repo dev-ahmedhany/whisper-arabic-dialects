@@ -1,0 +1,5 @@
+gradio>=4.40
+torch>=2.4
+transformers>=4.50
+librosa>=0.10
+numpy
