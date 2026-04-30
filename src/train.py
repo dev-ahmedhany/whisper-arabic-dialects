@@ -253,15 +253,23 @@ def main() -> None:
             },
         )
 
-    trainer = Seq2SeqTrainer(
+    # transformers ≥4.50 renamed Trainer's `tokenizer=` kwarg to `processing_class=`;
+    # we pass the feature extractor either way (Whisper's "tokenizer" for inputs is the
+    # feature extractor, since the textual tokenizer is only used for label decoding).
+    import inspect
+    _trainer_kwargs = dict(
         args=training_args,
         model=model,
         train_dataset=ds["train"],
         eval_dataset=ds["validation"],
         data_collator=WhisperDataCollator(processor=processor),
         compute_metrics=build_compute_metrics(processor),
-        tokenizer=processor.feature_extractor,
     )
+    if "processing_class" in inspect.signature(Seq2SeqTrainer.__init__).parameters:
+        _trainer_kwargs["processing_class"] = processor.feature_extractor
+    else:
+        _trainer_kwargs["tokenizer"] = processor.feature_extractor
+    trainer = Seq2SeqTrainer(**_trainer_kwargs)
 
     train_result = trainer.train()
     trainer.save_model(cfg["output_dir"])
