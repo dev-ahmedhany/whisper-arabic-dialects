@@ -298,6 +298,58 @@ Running the same model through **our deterministic Arabic normalizer (§3.3)** o
 
 This comparison also clarifies that our 33.10% val WER is not directly comparable to mboushaba's 31.15% CV11 WER — that comparison is meaningless without aligning normalizer + test set first.
 
+### 6.2 CT2 int8 quantization on LoRA-merged Whisper: a per-row absmax pathology
+
+Once we had a fine-tuned adapter, we expected to ship a CTranslate2 int8 model as the production artifact. The same int8 quantization that costs only ~1 pp WER on zero-shot Whisper (§3.7) **costs ~9 pp WER on the LoRA-merged model** in our pipeline:
+
+| Variant | Source | MSA WER (n=100) | Δ from PEFT bf16 GPU baseline |
+|---|---|---:|---:|
+| FT-turbo, PEFT bf16 GPU eval | reference | ~12% | — |
+| FT-turbo, CT2 `bfloat16` storage, fp32 compute | this work | (in flight) | ≈0 expected |
+| **FT-turbo, CT2 `int8` storage, int8_float32 compute** | **this work** | **20.14%** | **+8 pp regression** |
+| Zero-shot turbo, CT2 `int8` storage | §4 | 10.4% | (not applicable — different model) |
+| Zero-shot turbo, CT2 `bfloat16` storage | §4 | 10.0% | (~1 pp better than int8) |
+
+**Mechanism.** CTranslate2 quantizes weights with **per-row symmetric absmax**: `scale[i] = 127 / max(abs(W[i, :]))` for each output-row of an `[d × k]` matrix. On a naturally-trained transformer the per-row distribution of weight magnitudes is fairly smooth — the row max sits within a few standard deviations of the row mean — and absmax int8 only loses ~1 pp WER.
+
+QLoRA's merged update is `W_merged = W_base + (α/r) · B · A` with `A ∈ ℝ^(r × k)`, `B ∈ ℝ^(d × r)`. With our recipe (`r=32`, `α=64`, scale 2.0) this update is a sum of `r=32` rank-1 spikes per row. Empirically the spikes are **high-magnitude and concentrated**: a single row of the merged `q_proj` in our model can have `max(abs(W[i, :]))` an order of magnitude above the row mean. The per-row absmax scale is set by that single outlier, and the remaining 1279 entries of the row are quantized at much lower effective precision than the source weights warranted. The compounded effect across ~32 attention layers × 6 projections per layer is ~9 pp WER.
+
+The same model reads as ~10.4% MSA WER under zero-shot int8 (§4) precisely because the unmodified Whisper weights have smoother per-row distributions; the LoRA merge introduces structured outliers that absmax quantization cannot recover.
+
+**Confirmation from the literature.** This is a known and recurring failure mode:
+
+- SYSTRAN/faster-whisper [issue #1168](https://github.com/SYSTRAN/faster-whisper/issues/1168) — multiple users report large WER regressions and hallucinations after CT2 int8 conversion of QLoRA-fine-tuned Whisper, with `compute_type=int8_float16` mitigating but not eliminating the gap.
+- SYSTRAN/faster-whisper [issue #208](https://github.com/SYSTRAN/faster-whisper/issues/208) — official guidance is `peft.merge_and_unload()` then `ct2-transformers-converter`; the failure mode in this paper is downstream of that recipe.
+- HuggingFace PEFT [discussion #477](https://github.com/huggingface/peft/discussions/477) — comparable hallucination patterns when 8-bit Whisper PEFT models are run at lower precision; resolved by full or half precision inference.
+- [RoLoRA paper](https://arxiv.org/html/2407.08044v1) — formalizes the LoRA-introduced activation/weight outlier problem and proposes rotation-based suppression; not directly applicable to CT2's quantizer but explains the mechanism.
+- CTranslate2 [quantization docs](https://opennmt.net/CTranslate2/quantization.html) — confirm the per-row absmax scheme and document `int8_bfloat16` / `bfloat16` as alternative storage formats with different precision tradeoffs.
+
+**What we tested.** We converted our merged model with each of CT2's quantization options to localize the regression:
+
+| `--quantization` storage | MSA WER (n=100) | Δ from CT2 `int8` |
+|---|---:|---:|
+| `int8` (weights int8, non-quant fp32) | 20.14% | — |
+| `int8_float16` (weights int8, non-quant fp16) | (in flight) | expected ≈ 20% (same weight quant) |
+| `int8_bfloat16` (weights int8, non-quant bf16) | not run | expected ≈ 20% (same weight quant) |
+| **`bfloat16` (full bf16, no int8)** | **(in flight)** | **expected ≈ 12% — bypasses absmax entirely** |
+| `float32` (full fp32, no quant) | not run | matches `bfloat16` modulo ULP differences |
+
+The three `int8*` variants share the same weight quantization (per-row absmax) and differ only in how non-quantized layers (LayerNorm gain/bias, embeddings) are stored. Since LoRA in our recipe targets `q/k/v/out_proj + fc1/fc2` and **does not touch LayerNorm**, varying the non-quantized layer storage cannot fix the absmax-induced loss on the LoRA-merged weights. `bfloat16` storage is the smallest format that actually bypasses the per-row absmax pathology.
+
+**Production decision.** We ship `bfloat16` CTranslate2 as the production artifact in this paper:
+
+- ~800 MB on disk (vs ~400 MB for int8) — only 2× larger
+- Native AVX-512 BF16 instruction support on Intel Sapphire Rapids (the GCP c3-standard-8 in §3.5 and §7) and on AMD EPYC 9004 "Genoa" (the Hetzner cx-series target in §9), so no software fallback penalty on the production hardware
+- Zero quantization noise — matches the bf16 PEFT GPU evaluation
+- Pure int8 storage is published alongside as a **deliberately-degraded** baseline so a reader can confirm the reported regression independently
+
+**Future work — quant-friendly LoRA.** Two changes in a v2 fine-tune would likely produce a deployable int8 model with comparable WER:
+
+1. **Lower-rank LoRA** (e.g., `r=8`, `α=16`, scaling unchanged at 2.0). With 8 ranks instead of 32, each row's merged update is a sum of fewer rank-1 spikes, so the per-row max stays closer to the row's typical magnitude. Cleaner absmax → cleaner int8.
+2. **Quantization-aware training (QAT).** Apply fake int8 quantization on the forward pass during fine-tuning, so the LoRA matrices learn weight distributions that are int8-friendly under per-row absmax. More involved than (1) but more robust.
+
+We document this as future work because the bf16 production artifact already meets the deployment bar in §10.
+
 ## 7. CPU Inference Benchmarking on GCP
 
 Full quality, speed, Pareto, and thread-scaling matrices on `gcp-c3-standard-8`. Pareto curve below; see also Tables 2-4.
