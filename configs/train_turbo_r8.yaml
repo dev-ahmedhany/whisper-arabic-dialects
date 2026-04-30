@@ -24,14 +24,21 @@ per_device_eval_batch_size: 4
 gradient_accumulation_steps: 2
 learning_rate: 1.0e-4
 warmup_ratio: 0.1
-num_train_epochs: 3
+num_train_epochs: 10               # ceiling; early-stop will halt earlier
+max_steps: 10000                   # ~9.3 epochs at effective batch 16, 17246 train rows
 optim: "paged_adamw_8bit"
 gradient_checkpointing: false
+
+# Early stopping on val WER plateau. The r=32 run plateaued at val WER ~33%
+# by step 2000-3000; we let the model run further but stop after 4 consecutive
+# evals without ≥0.1pp WER improvement.
+early_stopping_patience: 4
+early_stopping_threshold: 0.001
 
 # Schedule / logging
 eval_steps: 500
 save_steps: 500
-save_total_limit: 3
+save_total_limit: 6                # keep more snapshots so we can plot the full trajectory
 logging_steps: 25
 generation_max_length: 225
 seed: 42

@@ -271,6 +271,24 @@ def main() -> None:
         _trainer_kwargs["tokenizer"] = processor.feature_extractor
     trainer = Seq2SeqTrainer(**_trainer_kwargs)
 
+    # Optional early stopping on val WER plateau. Activates when
+    # `early_stopping_patience` is set in the YAML config; off by default for
+    # back-compat with the original 3-epoch fixed-length runs.
+    es_patience = cfg.get("early_stopping_patience")
+    if es_patience is not None:
+        from transformers import EarlyStoppingCallback
+        es_threshold = cfg.get("early_stopping_threshold", 0.001)  # ~0.1pp WER
+        trainer.add_callback(
+            EarlyStoppingCallback(
+                early_stopping_patience=int(es_patience),
+                early_stopping_threshold=float(es_threshold),
+            )
+        )
+        print(
+            f"[train] EarlyStoppingCallback active: patience={es_patience}, "
+            f"threshold={es_threshold}"
+        )
+
     train_result = trainer.train()
     trainer.save_model(cfg["output_dir"])
     processor.save_pretrained(cfg["output_dir"])
