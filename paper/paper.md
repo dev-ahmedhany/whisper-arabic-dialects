@@ -419,12 +419,14 @@ This validates the deployable production path documented in §10: r=8 QLoRA → 
 
 ### 6.6 Beam-size sweep: where does decoding budget stop helping?
 
-Whisper's decoder runs greedy (beam=1) by default; production setups sometimes raise beam to recover word-error margin at the cost of inference time. We swept beam ∈ {1, 3, 5, 10} on Whisper-large-v3 CT2 int8 across the 4 held-out test sets to map the WER × RTF tradeoff:
+Whisper's decoder runs greedy (beam=1) by default; production setups sometimes raise beam to recover word-error margin at the cost of inference time. We swept beam ∈ {1, 2, 3, 4, 5, 10} on Whisper-large-v3 CT2 int8 across the 4 held-out test sets to map the WER × RTF tradeoff:
 
 | beam | MSA | Egyptian | Levantine | Gulf | **avg-4** | RTF (MSA) |
 |---:|---:|---:|---:|---:|---:|---:|
 | 1 | 8.46% | 57.68% | 37.08% | 59.14% | **40.59%** | 0.514 |
+| 2 | **8.35%** | 57.79% | 35.94% | 56.74% | **39.71%** | 0.634 |
 | 3 | 8.51% | 56.58% | 35.22% | 57.44% | **39.44%** | 0.674 |
+| 4 | 8.51% | 56.69% | _running_ | _pending_ | _pending_ | 0.677 |
 | 5 | 8.51% | 56.47% | 35.12% | 56.34% | **39.13%** | 1.097 |
 | 10 | 8.40% | 56.91% | 44.90%† | 55.44% | **41.41%**† | 0.745 |
 
@@ -432,13 +434,14 @@ Whisper's decoder runs greedy (beam=1) by default; production setups sometimes r
 
 **Key findings:**
 
-1. **Beam=1 → beam=3 is the only meaningful step.** Average WER drops by 1.15 pp (40.59% → 39.44%) for ~30% RTF cost.
-2. **Beam=3 → beam=5 buys only 0.31 pp** on average for ~60% additional RTF cost on MSA (0.674 → 1.097). Not worth it for production, except as a quality-ceiling reference.
-3. **Beam=10 plateaus.** The MSA WER ticks down 0.11 pp from beam=5 to beam=10, but the Levantine point estimate (44.90%) has a CI of [31.92, 66.76] — a noisy run, not a real regression.
-4. **MSA is essentially beam-insensitive** (8.46 → 8.51 → 8.51 → 8.40 across all four). The greedy hypothesis already matches the human reference for clean broadcast Arabic.
-5. **Dialects benefit slightly more.** Egyptian, Levantine, and Gulf each gain 1–2 pp from beam=1 → beam=5. Plausibly because dialect transcripts have more locally-ambiguous decoding choices that beam search can disambiguate.
+1. **Beam=1 → beam=2 captures most of the benefit.** Average WER drops by 0.88 pp (40.59% → 39.71%) for ~23% RTF cost — the steepest improvement-per-RTF segment of the curve.
+2. **Beam=2 → beam=3 buys an additional 0.27 pp** but the per-dialect picture flips: b=2 wins MSA (-0.16) and Gulf (-0.70); b=3 wins Egyptian (-1.21) and Levantine (-0.72). Sum is within bootstrap CI overlap — statistically a wash.
+3. **Beam=3 → beam=5 buys only 0.31 pp** on average for ~60% additional RTF cost on MSA (0.674 → 1.097). Not worth it for production, except as a quality-ceiling reference.
+4. **Beam=10 plateaus.** The MSA WER ticks down 0.11 pp from beam=5 to beam=10, but the Levantine point estimate has a CI of [31.92, 66.76] — a noisy run, not a real regression.
+5. **MSA is essentially beam-insensitive** (8.35–8.51% across all six). The greedy hypothesis already matches the human reference for clean broadcast Arabic; beam=2 happens to win by 0.16 pp on point estimate.
+6. **Dialects benefit modestly.** Egyptian, Levantine, and Gulf gain ~1–2 pp from beam=1 → beam=5, but most of that gain is captured by beam=2 alone.
 
-**Production recommendation:** beam=1 is the right default; raise to beam=3 for dialect-heavy traffic if the +30% RTF cost is acceptable. Beam=5+ is for offline batch jobs where quality matters more than throughput.
+**Production recommendation:** beam=2 is the right default. It captures the bulk of the dialect benefit (avg −0.88 pp vs greedy) while staying ~6% faster than beam=3 on RTF and adding only 23% over beam=1. Pick beam=3 only if your traffic is overwhelmingly Egyptian or Levantine (where b=3 has a real ~1 pp lead) AND latency is non-binding. Beam=5+ is for offline batch jobs where quality matters more than throughput.
 
 ### 6.7 Speech-LLM comparison: do larger multilingual audio LLMs replace Whisper?
 
