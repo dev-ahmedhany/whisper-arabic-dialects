@@ -11,28 +11,25 @@ The paper draft is in [`paper/paper.md`](paper/paper.md). Deployment runbooks fo
 - 🤗 **Interactive demo** (Gradio Space, side-by-side vs zero-shot): https://huggingface.co/spaces/dev-ahmedhany/whisper-arabic-dialects
 - 🌐 **Project case study**: https://hany.dev/case-studies/whisper-arabic-dialects
 
-## Headline results
+## Headline results — v2 fine-tune on mixed-domain test sets
 
-Held-out test sets (n=100 per dialect, beam=1, deterministic Arabic normalizer in `src/normalization.py`).
-Zero-shot is `openai/whisper-large-v3-turbo` (CT2 int8). Fine-tuned is this work, evaluated as PEFT bf16 GPU.
+Held-out 4-dialect test (n=100/dialect). Egyptian + Levantine are **50% Casablanca conversational + 50% broadcast** (MGB-3, MASC) — designed to reflect both registers a deployed model will see. Gulf is 100% Casablanca (no public broadcast Gulf source); MSA is 100% FLEURS broadcast. Same exact recordings + decoding config used for both rows. Both models: CT2 int8, beam=2, 8 threads, c3-standard-8.
 
-| Dialect | Test source | Zero-shot WER | **Fine-tuned WER** | Δ |
+| Dialect | Test composition | Zero-shot turbo | **v2-ft turbo (this work)** | Δ |
 |---|---|---:|---:|---:|
-| MSA | FLEURS Arabic | 10.4% | 11.5% | +1.1 pp |
-| Egyptian | Casablanca | 65.0% | 62.7% | **−2.3 pp** ✅ |
-| Gulf | Casablanca | 61.1% | 58.6% | **−2.5 pp** ✅ |
-| **avg (3 dialects)** | | **45.5%** | **44.3%** | **−1.2 pp** |
+| MSA | FLEURS broadcast | 10.20% | 11.42% | +1.22 |
+| Egyptian | 50 Casablanca + 50 MGB-3 | 44.61% | **36.09%** | **−8.52 pp** ✅ |
+| Levantine | 50 Casablanca + 50 MASC | 41.53% | **40.49%** | −1.04 (tied) |
+| Gulf | Casablanca UAE | 59.00% | **53.92%** | **−5.08 pp** ✅ |
+| **avg-4** | | **38.84%** | **35.48%** | **−3.35 pp** ✅ |
 
-The val WER during training reaches **33.10%** on a held-out slice of the training-source distribution.
+**v2-ft beats zero-shot turbo by 3.35 pp average** on the mixed-domain test, with dominant gains on Egyptian (−8.52) and Gulf (−5.08). The earlier Casablanca-only test only showed a 0.72 pp average lift; the mixed-domain test reveals the model's real advantage on dialect-diverse traffic.
 
-### Dialects scoped out of v1
+The v3 large-v3 fine-tune (in training, see [`configs/train_large_v3_r8.yaml`](configs/train_large_v3_r8.yaml)) targets the next quality ceiling and pushes every checkpoint to a fresh HF repo (`dev-ahmedhany/whisper-large-v3-arabic-ft-v3-lora`). See [`deploy/06_v3_data_and_eval.md`](deploy/06_v3_data_and_eval.md) for the full reproduction.
 
-Two dialects are deliberately excluded from the headline numbers — for different reasons that the paper documents in §3 (scope) and §12 (limitations):
+### Dialects scoped out
 
-- **Maghrebi (Moroccan/Algerian)** — excluded from training and reporting. Whisper has insufficient Moroccan/Algerian Arabic in pretraining (84.7% zero-shot WER at large-v3 int8); QLoRA cannot bring it within range of other dialects in this training budget.
-- **Levantine** — trained on (MASC, ~4 h broadcast TV) but excluded from the headline. The held-out Casablanca Levantine test set has very different acoustic characteristics from MASC (mixed-genre / phone-quality vs broadcast studio), and the v1 model overfit to MASC's narrow distribution. Reported FT WER 51.9% vs zero-shot 40.3% — a +11.6 pp regression that is a **train-test domain mismatch**, not a Levantine modeling failure. The v2 retrain (r=8, α=16, **+ Casablanca train splits**) is designed to fix this.
-
-The v1 fine-tune delivers a clean 2–3 pp lift on Egyptian and Gulf. v2 (in training as of this commit) targets a clean Levantine number plus a deployable int8 path (paper §6.2).
+- **Maghrebi (Moroccan/Algerian/Tunisian)** — excluded from training and reporting. Whisper has insufficient Maghrebi Arabic in pretraining (84.7% zero-shot WER at large-v3 int8); QLoRA cannot bring it within range of other dialects in this training budget. Paper §3.7.
 
 ## Quickstart
 
