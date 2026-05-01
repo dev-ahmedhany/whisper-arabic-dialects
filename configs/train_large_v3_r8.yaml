@@ -32,16 +32,22 @@ max_steps: 10000
 optim: "paged_adamw_8bit"
 gradient_checkpointing: true     # mandatory at large-v3 scale on 24GB
 
-# Early stopping — patience 4 evals (= 2000 steps without ≥0.1pp WER
-# improvement). load_best_model_at_end=True so the saved adapter is
-# the best-WER checkpoint regardless of where training halts.
-early_stopping_patience: 4
-early_stopping_threshold: 0.001
+# Early stopping disabled with eval_strategy=no (no metric to gate on).
+# Pick best checkpoint manually post-hoc from runs/results.jsonl rows
+# written by the external CPU eval poller.
+# early_stopping_patience: 4
+# early_stopping_threshold: 0.001
 
 # Schedule / logging
-eval_steps: 500
-save_steps: 500
-save_total_limit: 6
+# v3 resume (2026-05-01): switching to no-eval + checkpoints every 250 steps,
+# with eval running externally on the same L4 box's CPU (see
+# /tmp/checkpoint_eval_poller.py). Trade-off: lose Trainer's early-stop
+# (since metric_for_best_model needs eval), but gain ~70% GPU duty cycle.
+eval_strategy: "no"
+eval_steps: 250
+save_steps: 250
+save_total_limit: 12
+load_best_model_at_end: false
 logging_steps: 25
 generation_max_length: 225
 seed: 42

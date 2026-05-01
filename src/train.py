@@ -124,6 +124,8 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--output-dir", type=str, default=None)
     parser.add_argument("--no-wandb", action="store_true")
+    parser.add_argument("--resume-from-checkpoint", type=str, default=None,
+                        help="path to checkpoint dir to resume training from")
     args = parser.parse_args()
 
     cfg = _load_config(
@@ -226,7 +228,7 @@ def main() -> None:
         fp16=False,
         gradient_checkpointing=cfg.get("gradient_checkpointing", False),
         optim=cfg.get("optim", "paged_adamw_8bit"),
-        eval_strategy="steps",
+        eval_strategy=cfg.get("eval_strategy", "steps"),
         eval_steps=cfg.get("eval_steps", 500),
         save_steps=cfg.get("save_steps", 500),
         save_total_limit=cfg.get("save_total_limit", 3),
@@ -236,8 +238,8 @@ def main() -> None:
         report_to=[] if args.no_wandb else cfg.get("report_to", ["tensorboard", "wandb"]),
         remove_unused_columns=False,
         label_names=["labels"],
-        load_best_model_at_end=True,
-        metric_for_best_model="wer",
+        load_best_model_at_end=cfg.get("load_best_model_at_end", True),
+        metric_for_best_model=cfg.get("metric_for_best_model", "wer"),
         greater_is_better=False,
         seed=cfg.get("seed", 42),
         run_name=cfg.get("run_name"),
@@ -297,7 +299,7 @@ def main() -> None:
             f"threshold={es_threshold}"
         )
 
-    train_result = trainer.train()
+    train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     trainer.save_model(cfg["output_dir"])
     processor.save_pretrained(cfg["output_dir"])
 
