@@ -41,7 +41,8 @@ def main() -> None:
     p.add_argument("--output-log", default=Path("runs/results.jsonl"), type=Path)
     p.add_argument("--predictions-dir", default=Path("runs/predictions"), type=Path)
     p.add_argument("--platform-label", default="l4-gpu")
-    p.add_argument("--prompt", default="Transcribe the Arabic audio verbatim. Reply with only the transcription, no extra text.")
+    p.add_argument("--language", default="ar",
+                   help="Voxtral transcription request language code")
     args = p.parse_args()
     if args.model_name is None:
         args.model_name = args.model.rstrip("/").split("/")[-1].lower().replace("-", "")
@@ -74,15 +75,10 @@ def main() -> None:
     for i, s in enumerate(samples):
         try:
             t0 = time.perf_counter()
-            conversation = [
-                {"role": "user", "content": [
-                    {"type": "audio", "path": s["audio"]},
-                    {"type": "text", "text": args.prompt},
-                ]}
-            ]
-            inputs = processor.apply_chat_template(
-                conversation, tokenize=True, add_generation_prompt=True,
-                return_tensors="pt", return_dict=True,
+            inputs = processor.apply_transcription_request(
+                language=args.language,
+                audio=s["audio"],
+                model_id=args.model,
             ).to(args.device, dtype=torch.bfloat16)
             with torch.inference_mode():
                 out = model.generate(**inputs, max_new_tokens=256, do_sample=False)

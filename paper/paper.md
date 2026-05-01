@@ -440,6 +440,27 @@ Whisper's decoder runs greedy (beam=1) by default; production setups sometimes r
 
 **Production recommendation:** beam=1 is the right default; raise to beam=3 for dialect-heavy traffic if the +30% RTF cost is acceptable. Beam=5+ is for offline batch jobs where quality matters more than throughput.
 
+### 6.7 Speech-LLM comparison: do larger multilingual audio LLMs replace Whisper?
+
+A natural question for 2026 deployments is whether a generalist multilingual audio LLM (Voxtral, Qwen2-Audio, Phi-4-Multimodal) replaces a task-specific ASR model. We evaluated Mistral's Voxtral family on the same 4 held-out test sets used elsewhere in the paper (n=100 per dialect, deterministic Arabic normalizer):
+
+| Model | Params | MSA | Egyptian | Levantine | Gulf | **avg-4** | RTF (MSA) | GPU mem |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Whisper-large-v3 (CT2 int8 / CPU)¹ | 1.55 B | **8.46%** | **57.68%** | **37.08%** | **59.14%** | **40.59%** | 0.514 | 4.1 GB |
+| Voxtral-Mini-3B (bf16 / GPU) | 3.0 B | 14.32% | 89.69% | 48.51% | 77.42% | 57.49% | 0.115 | 9.4 GB |
+| **Voxtral-Small-24B (4-bit / GPU)** | 24 B | **8.56%** | 77.41% | 50.88% | 72.23% | **52.27%** | 0.259 | 15.6 GB |
+
+¹ Whisper-large-v3 is the matched reference; the FT v2 row is even better on dialects (see §6.5 / §6).
+
+**Findings:**
+
+1. **MSA: Voxtral-24B is statistically tied with Whisper** (8.56% vs 8.46%, CIs overlap heavily). Voxtral's 24-billion-parameter LLM head matches a purpose-trained 1.55-billion-parameter ASR encoder-decoder on clean broadcast Arabic.
+2. **Dialects: Voxtral-24B trails by 13–20 pp on every Arabic dialect.** Egyptian +19.7 pp, Levantine +13.8 pp, Gulf +13.1 pp. The fact that Voxtral was trained for general audio reasoning (audio QA, summarization, multi-turn dialog) rather than verbatim ASR shows up here — it paraphrases, drops disfluencies, and fails to capture dialect-specific lexical items.
+3. **Voxtral-Mini-3B is worse than Whisper across every dialect** including MSA (+5.86 pp). At 3 B parameters, Voxtral has neither Whisper's task-specific training nor the raw scale that lets the 24 B variant compete on MSA.
+4. **GPU memory: Voxtral-24B at 4-bit fits a 24 GB L4** (15.6 GB peak) — viable for production *if* you already have GPU infrastructure. Whisper at int8 needs only 4 GB and runs on c3-standard-8 CPU at $0.40/hr.
+
+**Implication for the production-recommendation table (§10):** Voxtral-Small-24B is *not* a Whisper replacement for Arabic ASR as of 2026-Q2. The 13–20 pp dialect gap is too large; only a domain-tuned Whisper variant clears the deployment quality bar across MSA + dialects in a single model. Speech-LLMs may close this gap with future Arabic-specific fine-tunes — but as released, they are an MSA-only ceiling, not a multi-dialect replacement.
+
 ## 7. CPU Inference Benchmarking on GCP
 
 Full quality, speed, Pareto, and thread-scaling matrices on `gcp-c3-standard-8`. Pareto curve below; see also Tables 2-4.
