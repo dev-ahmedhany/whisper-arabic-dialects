@@ -241,6 +241,10 @@ def main() -> None:
         greater_is_better=False,
         seed=cfg.get("seed", 42),
         run_name=cfg.get("run_name"),
+        push_to_hub=cfg.get("push_to_hub", False),
+        hub_model_id=cfg.get("hub_model_id"),
+        hub_strategy=cfg.get("hub_strategy", "every_save"),
+        hub_private_repo=cfg.get("hub_private_repo", False),
     )
 
     if not args.no_wandb and "wandb" in (cfg.get("report_to") or []):

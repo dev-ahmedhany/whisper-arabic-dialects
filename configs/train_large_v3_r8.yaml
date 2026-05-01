@@ -51,3 +51,10 @@ run_name: "whisper-large-v3-ar-lora-v3"
 report_to: ["tensorboard", "wandb"]
 wandb_project: "whisper-arabic-ft"
 wandb_tags: ["large-v3", "qlora", "v3-best-wer"]
+
+# Push every saved checkpoint to a NEW HF repo so a machine outage can't lose
+# weights. Per memory/hf_versioning.md — never overwrite an existing repo.
+push_to_hub: true
+hub_model_id: "dev-ahmedhany/whisper-large-v3-arabic-ft-v3-lora"
+hub_strategy: "every_save"
+hub_private_repo: false
