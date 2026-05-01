@@ -1,0 +1,53 @@
+# QLoRA fine-tune of whisper-large-v3 (full, 1.55B) on the v2
+# Casablanca-domain-matched mix. Same r=8 LoRA recipe as v2-turbo
+# (verified to survive CT2 int8 quantization, paper §6.5) — only the
+# base model changes, isolating the "bigger base" effect.
+#
+# Targets the "best WER ever" headline alongside the production-Pareto
+# turbo row from v2.
+
+model_name: "openai/whisper-large-v3"
+language: "arabic"
+task: "transcribe"
+attn_implementation: "sdpa"
+
+train_jsonl: "test_sets/train_v2.jsonl"
+val_jsonl: "test_sets/val_v2.jsonl"
+
+# LoRA — identical to v2-turbo r=8 (int8-safe per §6.5)
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_modules: ["q_proj", "v_proj", "k_proj", "out_proj", "fc1", "fc2"]
+
+# Optimization — smaller per-device batch than turbo to fit large-v3
+# (32 decoder layers vs 4) on a single 24 GB L4 with grad checkpointing.
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 2
+gradient_accumulation_steps: 4   # effective batch 16, matches v2-turbo
+learning_rate: 1.0e-4
+warmup_ratio: 0.1
+num_train_epochs: 10              # ceiling; early-stop will halt earlier
+max_steps: 10000
+optim: "paged_adamw_8bit"
+gradient_checkpointing: true     # mandatory at large-v3 scale on 24GB
+
+# Early stopping — patience 4 evals (= 2000 steps without ≥0.1pp WER
+# improvement). load_best_model_at_end=True so the saved adapter is
+# the best-WER checkpoint regardless of where training halts.
+early_stopping_patience: 4
+early_stopping_threshold: 0.001
+
+# Schedule / logging
+eval_steps: 500
+save_steps: 500
+save_total_limit: 6
+logging_steps: 25
+generation_max_length: 225
+seed: 42
+
+output_dir: "checkpoints/whisper-large-v3-ar-lora"
+run_name: "whisper-large-v3-ar-lora-v3"
+report_to: ["tensorboard", "wandb"]
+wandb_project: "whisper-arabic-ft"
+wandb_tags: ["large-v3", "qlora", "v3-best-wer"]
