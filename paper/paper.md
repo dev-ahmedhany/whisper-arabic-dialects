@@ -470,7 +470,11 @@ A subset of the GCP matrix is replayed on a Hetzner CX53 (AMD EPYC, ~$0.043/hr) 
 
 <!-- INSERT: table_5 -->
 
-_(both platforms required for cross-platform table)_
+| Model | Compute | Beam | GCP RTF | CX53 RTF | RTF ratio | GCP $/hr | CX53 $/hr | Cost ratio |
+|---|---|---|---|---|---|---|---|---|
+| zero-shot-small | int8 | 1 | 0.364 | 0.586 | 1.61× | $0.40 | $0.043 | 9.3× |
+| zero-shot-tiny | int8 | 1 | 0.206 | 0.148 | 0.72× | $0.40 | $0.043 | 9.3× |
+| zero-shot-turbo | int8 | 1 | 0.818 | 1.888 | 2.31× | $0.40 | $0.043 | 9.3× |
 
 ## 10. Production Recommendations
 
@@ -483,10 +487,10 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 | Use case | Constraint | Best model | Compute | Beam | Threads | Platform | Dialects covered | Avg WER | Avg RTF | $/audio-hr |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Real-time captioning | avg TTFT-p95 < 1s, avg WER < median | - | - | - | - | - | - | - | - | - |
-| Batch transcription (min avg WER) | min avg WER | zero-shot-large-v3 | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 49.4 [45.4, 53.5] | 1.288 | $0.515/audio-hr |
+| Batch transcription (min avg WER) | min avg WER | zero-shot-large-v3 | int8 | 5 | 4 | gcp-c3-standard-8 | 4 | 39.1 [35.2, 43.2] | 2.122 | $0.849/audio-hr |
 | Edge deployment | RAM < 1 GB, avg WER < median | - | - | - | - | - | - | - | - | - |
 | Balanced production | avg RTF < 0.5, max accuracy | zero-shot-small | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 64.5 [60.7, 68.5] | 0.364 | $0.145/audio-hr |
-| Cost-optimized | min $/audio-hr, avg WER < median | zero-shot-turbo | int8_float32 | 1 | 4 | gcp-c3-standard-8 | 5 | 52.5 [48.9, 56.4] | 0.792 | $0.317/audio-hr |
+| Cost-optimized | min $/audio-hr, avg WER < median | v2-ct2-int8 | int8 | 1 | 4 | l4-cpu-eval | 4 | 42.3 [38.5, 46.4] | 1.636 | - |
 
 ## 11. Error Analysis
 
