@@ -11,8 +11,8 @@ language: "arabic"
 task: "transcribe"
 attn_implementation: "sdpa"
 
-train_jsonl: "test_sets/train_v2.jsonl"
-val_jsonl: "test_sets/val_v2.jsonl"
+train_jsonl: "test_sets/train_v3.jsonl"
+val_jsonl: "test_sets/val_v3.jsonl"
 
 # LoRA — identical to v2-turbo r=8 (int8-safe per §6.5)
 lora_r: 8
