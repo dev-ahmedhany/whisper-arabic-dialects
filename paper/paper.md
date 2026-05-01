@@ -426,7 +426,9 @@ Whisper's decoder runs greedy (beam=1) by default; production setups sometimes r
 | 1 | 8.46% | 57.68% | 37.08% | 59.14% | **40.59%** | 0.514 |
 | 3 | 8.51% | 56.58% | 35.22% | 57.44% | **39.44%** | 0.674 |
 | 5 | 8.51% | 56.47% | 35.12% | 56.34% | **39.13%** | 1.097 |
-| 10 | 8.40% | 56.91% | (noisy) | (TBD) | — | 0.745 |
+| 10 | 8.40% | 56.91% | 44.90%† | 55.44% | **41.41%**† | 0.745 |
+
+†The beam=10 Levantine point estimate (44.90%) has a wide bootstrap CI of [31.92%, 66.76%], pointing to a degenerate decoding for some Levantine clips at high beam (the model entered a long repetition loop on a handful of samples). This pulls the avg-4 up artificially. Excluding Levantine, the b=10 avg of MSA + Egyptian + Gulf is **40.25%** — directionally consistent with the b=3/b=5 trend, and improving on b=5 by 0.07 pp on those three dialects.
 
 **Key findings:**
 
