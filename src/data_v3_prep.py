@@ -54,6 +54,7 @@ SOURCE_DIALECT_OVERRIDE = {
     "casablanca_levantine_train.jsonl": "levantine",
     "casablanca_gulf_train.jsonl": "gulf",
     "arzen_egyptian_train.jsonl": "egyptian",
+    "egyptian_clean_mgb3_train.jsonl": "egyptian",
 }
 
 # Default mapping of source bucket → genre (broadcast vs conversational). Used
@@ -66,6 +67,7 @@ SOURCE_GENRE = {
     "common_voice": "read",
     "casablanca": "mixed-conversational",
     "arzen": "conversational",
+    "egyptian_clean_mgb3": "broadcast-clean",
 }
 
 
@@ -112,6 +114,7 @@ def build_v3(args: argparse.Namespace) -> None:
         "common_voice_18_ar_train.jsonl",
         "masc_levantine_train.jsonl",
         "mgb3_egyptian_train.jsonl",
+        "egyptian_clean_mgb3_train.jsonl",
         "casablanca_egyptian_train.jsonl",
         "casablanca_levantine_train.jsonl",
         "casablanca_gulf_train.jsonl",
