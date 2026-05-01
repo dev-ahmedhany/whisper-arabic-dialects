@@ -510,7 +510,7 @@ Derived from the Pareto data, not assumed. Each row picks the best cell from the
 | Real-time captioning | avg TTFT-p95 < 1s, avg WER < median | - | - | - | - | - | - | - | - | - |
 | Batch transcription (min avg WER) | min avg WER | zero-shot-large-v3 | int8 | 5 | 4 | gcp-c3-standard-8 | 4 | 39.1 [35.2, 43.2] | 2.122 | $0.849/audio-hr |
 | Edge deployment | RAM < 1 GB, avg WER < median | - | - | - | - | - | - | - | - | - |
-| Balanced production | avg RTF < 0.5, max accuracy | zero-shot-small | int8 | 1 | 4 | gcp-c3-standard-8 | 5 | 64.5 [60.7, 68.5] | 0.364 | $0.145/audio-hr |
+| Balanced production | avg RTF < 0.5, max accuracy | voxtralsmall24b2507 | 4bit | 1 | 0 | l4-gpu | 4 | 44.0 [31.9, 65.7] | 0.435 | - |
 | Cost-optimized | min $/audio-hr, avg WER < median | v2-ct2-int8 | int8 | 1 | 4 | l4-cpu-eval | 4 | 42.3 [38.5, 46.4] | 1.636 | - |
 
 ## 11. Error Analysis
