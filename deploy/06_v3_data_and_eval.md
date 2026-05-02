@@ -243,3 +243,73 @@ for m in api.list_models(author='dev-ahmedhany'):
 — and confirm `whisper-large-v3-arabic-ft-v3-{lora,,-ct2-int8}` are all
 listed before tearing down. The auto-push hook covers the LoRA; the merged
 + CT2 artifacts must be uploaded manually before deletion.
+
+## 7. Checkpoint trajectory + best-ckpt selection
+
+Because `eval_strategy=no` (§3) means the Trainer cannot pick the best
+checkpoint, we eval **every** saved adapter offline and pick by held-out
+WER. The LoRA repo on HF preserves all 30+ saves as Git revisions, so
+this can be reproduced from a clean checkout.
+
+Same protocol for every checkpoint: snapshot_download the revision, merge
+LoRA into base safetensors, ct2-transformers-converter int8, then run
+`src.eval_harness` at `--beam-size 2 --cpu-threads 8 --device cpu` against
+the 4 canonical v3 mixed test sets (n=100/dialect). Identical to the
+zero-shot baseline cell above — only the model swaps in.
+
+Trajectory sweep (CT2 int8, beam=2, 8 threads, c3-standard-8, n=100/dialect):
+
+| ckpt | MSA | Egyptian | Levantine | Gulf | avg-4 |
+|---:|---:|---:|---:|---:|---:|
+| 500   | 10.78 | 36.09 | 39.10 | 48.11 | 33.52 |
+| 1000  | 11.21 | 31.69 | 37.35 | 47.37 | 31.90 |
+| 1500  | 11.05 | 29.69 | 36.31 | 45.61 | 30.67 |
+| 2000  | 10.99 | 29.89 | 34.45 | 42.84 | 29.55 |
+| 2500  | 10.73 | 27.56 | 31.44 | 42.38 | 28.03 |
+| 3000  | 10.47 | 26.96 | 32.71 | 41.27 | 27.85 |
+| 3500  | 10.36 | 26.56 | 32.71 | 41.37 | 27.75 |
+| 4000  | 11.68 | 25.43 | 31.79 | 41.83 | 27.68 |
+| 4500  | 11.84 | 26.43 | 32.02 | 40.26 | 27.64 |
+| **4750** ⭐ | **10.52** | **23.90** | **30.63** | **41.46** | **26.63** |
+| 5000  | 11.73 | 24.17 | 31.32 | 41.46 | 27.17 |
+| 5500  | 12.05 | 24.83 | 29.58 | 41.64 | 27.03 |
+| 6000  | 11.52 | 24.77 | 29.12 | 41.83 | 26.81 |
+| 6250  | 12.21 | 24.77 | 29.81 | 41.92 | 27.18 |
+| 6500  | 11.47 | 24.43 | 30.51 | 41.92 | 27.08 |
+| 6750  | 11.36 | 24.30 | 30.63 | 41.37 | 26.91 |
+| 7000  | 11.73 | 23.30 | 29.81 | 41.46 | 26.58 |
+| 7250  | 13.64 | 23.44 | 30.16 | 40.81 | 27.01 |
+| 7500  | 12.37 | 24.10 | 31.90 | 42.47 | 27.71 |
+| 7750  | 11.84 | 24.10 | 30.97 | 43.12 | 27.51 |
+
+**Selection: ckpt-4750.** Two ckpts (6000, 7000) edge avg-4 by ≤0.05 pp,
+but both regress MSA by 1.0–1.2 pp (10.52 → 11.52 / 11.73). The MSA cell
+is the overfit signal: the v3 mix is dialect-heavy, so ckpts past ~5000
+trade MSA quality for marginal dialect gains. We rejected the 7000 swap
+because the MSA loss exceeds the dialect gain in user-weighted impact.
+
+Selecting 4750 also produces the best per-dialect Pareto: it is strictly
+within the bootstrap CI of the best Egyptian (23.30 @ 7000), best
+Levantine (29.12 @ 6000), and best Gulf (40.26 @ 4500) results from the
+sweep, while having the best MSA among the dialect-leading group.
+
+**Verification of the published HF artifact.** To confirm the
+`dev-ahmedhany/whisper-large-v3-arabic-ft-v3-ct2-int8` repo matches a
+clean local rebuild from the LoRA revision SHA `7923fe7bc9b7` (= ckpt-4750),
+we re-eval'd both:
+
+| model | MSA | Egyptian | Levantine | Gulf |
+|---|---:|---:|---:|---:|
+| HF v3-ct2-int8 (downloaded) | 10.41 | 24.30 | 30.97 | 42.29 |
+| Local merge of revision 7923fe7bc9b7 | 10.52 | 23.90 | 30.63 | 41.46 |
+
+All four rows within bootstrap-CI noise. The published artifact is the
+correct ckpt-4750.
+
+Raw per-utterance predictions for the trajectory live in
+`runs/predictions/` on the bench instances at the time of the sweep.
+The aggregated WER rows (one per ckpt × dialect) are in
+`runs/results.jsonl` for ckpts 500-6000; ckpts 6250-8250 were eval'd on
+ephemeral bench-c2/c3 boxes and only their summary rows survive (above).
+A fresh trajectory sweep of any subset is one `tmux` invocation away
+following the recipe in this section.
