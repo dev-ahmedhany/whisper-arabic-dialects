@@ -6,26 +6,42 @@ The paper draft is in [`paper/paper.md`](paper/paper.md). Deployment runbooks fo
 
 ## Released artifacts
 
-- 🤗 **LoRA adapter** (~111 MB, for further FT): https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft-lora
-- 🤗 **Merged HF model** (~3 GB, ready to use with `transformers`): https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft
-- 🤗 **Interactive demo** (Gradio Space, side-by-side vs zero-shot): https://huggingface.co/spaces/dev-ahmedhany/whisper-arabic-dialects
-- 🌐 **Project case study**: https://hany.dev/case-studies/whisper-arabic-dialects
+**v3 large-v3 fine-tune** (paper headline, Apr 2026):
+- 🤗 [LoRA adapter](https://huggingface.co/dev-ahmedhany/whisper-large-v3-arabic-ft-v3-lora) — every save during training (30+ Git revisions for trajectory analysis)
+- 🤗 [Merged HF model](https://huggingface.co/dev-ahmedhany/whisper-large-v3-arabic-ft-v3) (~3 GB safetensors, transformers-ready)
+- 🤗 [CTranslate2 int8](https://huggingface.co/dev-ahmedhany/whisper-large-v3-arabic-ft-v3-ct2-int8) (~1.6 GB, production-deployable on CPU)
 
-## Headline results — v2 fine-tune on mixed-domain test sets
+**v2 turbo fine-tune** (smaller/faster, paper §6.5):
+- 🤗 [LoRA adapter](https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft-lora), [Merged](https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft), [CT2 int8](https://huggingface.co/dev-ahmedhany/whisper-large-v3-turbo-arabic-ft-ct2-int8)
 
-Held-out 4-dialect test (n=100/dialect). Egyptian + Levantine are **50% Casablanca conversational + 50% broadcast** (MGB-3, MASC) — designed to reflect both registers a deployed model will see. Gulf is 100% Casablanca (no public broadcast Gulf source); MSA is 100% FLEURS broadcast. Same exact recordings + decoding config used for both rows. Both models: CT2 int8, beam=2, 8 threads, c3-standard-8.
+**Other:**
+- 🤗 [Interactive demo](https://huggingface.co/spaces/dev-ahmedhany/whisper-arabic-dialects) — Gradio Space, side-by-side vs zero-shot
+- 🌐 [Project case study](https://hany.dev/case-studies/whisper-arabic-dialects)
 
-| Dialect | Test composition | Zero-shot turbo | **v2-ft turbo (this work)** | Δ |
+## Headline results — v3 large-v3 fine-tune on mixed-domain test sets
+
+Held-out 4-dialect test (n=100/dialect). Egyptian + Levantine are **50% Casablanca conversational + 50% broadcast** (MGB-3, MASC). Gulf is 100% Casablanca (no public broadcast Gulf source); MSA is 100% FLEURS broadcast. Same recordings + decoding config used for both rows. Both: CT2 int8, beam=2, 8 threads, c3-standard-8.
+
+| Dialect | Test composition | Zero-shot Whisper-large-v3 | **v3-ft (this work, ckpt-4750)** | Δ |
 |---|---|---:|---:|---:|
-| MSA | FLEURS broadcast | 10.20% | 11.42% | +1.22 |
-| Egyptian | 50 Casablanca + 50 MGB-3 | 44.61% | **36.09%** | **−8.52 pp** ✅ |
-| Levantine | 50 Casablanca + 50 MASC | 41.53% | **40.49%** | −1.04 (tied) |
-| Gulf | Casablanca UAE | 59.00% | **53.92%** | **−5.08 pp** ✅ |
-| **avg-4** | | **38.84%** | **35.48%** | **−3.35 pp** ✅ |
+| MSA | FLEURS broadcast | **8.51%** | 10.52% | +2.01 |
+| Egyptian | 50 Casablanca + 50 MGB-3 | 38.48% | **23.90%** | **−14.58 pp** ✅ |
+| Levantine | 50 Casablanca JO + 50 MASC | 37.70% | **30.63%** | **−7.07 pp** ✅ |
+| Gulf | Casablanca UAE | 52.72% | **41.46%** | **−11.26 pp** ✅ |
+| **avg-4** | | 34.35% | **26.63%** | **−7.72 pp** ✅ |
 
-**v2-ft beats zero-shot turbo by 3.35 pp average** on the mixed-domain test, with dominant gains on Egyptian (−8.52) and Gulf (−5.08). The earlier Casablanca-only test only showed a 0.72 pp average lift; the mixed-domain test reveals the model's real advantage on dialect-diverse traffic.
+**v3-ft beats zero-shot Whisper-large-v3 by 7.72 pp average** on the mixed-domain test. Double-digit gains on Egyptian (−14.58) and Gulf (−11.26), strong on Levantine (−7.07). MSA loses 2.01 pp — known dialect-vs-MSA tradeoff that v4 (planned) addresses with an MSA-rebalanced 74h+ mix.
 
-The v3 large-v3 fine-tune (in training, see [`configs/train_large_v3_r8.yaml`](configs/train_large_v3_r8.yaml)) targets the next quality ceiling and pushes every checkpoint to a fresh HF repo (`dev-ahmedhany/whisper-large-v3-arabic-ft-v3-lora`). See [`deploy/06_v3_data_and_eval.md`](deploy/06_v3_data_and_eval.md) for the full reproduction.
+For the smaller turbo variant (better on MSA, smaller model, similar dialect numbers as the older v2 result):
+| Dialect | Zero-shot turbo | **v2-ft turbo** | Δ |
+|---|---:|---:|---:|
+| MSA | 10.20% | 11.42% | +1.22 |
+| Egyptian | 44.61% | **36.09%** | **−8.52** ✅ |
+| Levantine | 41.53% | 40.49% | −1.04 (tied) |
+| Gulf | 59.00% | **53.92%** | **−5.08** ✅ |
+| **avg-4** | 38.84% | **35.48%** | **−3.35 pp** ✅ |
+
+The v3 large-v3 fine-tune is the new state-of-the-art for this project. Reproduction in [`deploy/06_v3_data_and_eval.md`](deploy/06_v3_data_and_eval.md).
 
 ### Dialects scoped out
 
