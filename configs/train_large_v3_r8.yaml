@@ -46,7 +46,11 @@ gradient_checkpointing: true     # mandatory at large-v3 scale on 24GB
 eval_strategy: "no"
 eval_steps: 250
 save_steps: 250
-save_total_limit: 12
+# 40 ckpts × ~110MB (LoRA only) = ~4.4 GB local — well within L4 disk.
+# With max_steps=10000 + save_steps=250 = up to 40 saves total, so 40
+# means "keep them all." Earlier 12 caused us to lose ckpts 500-5500
+# (recovered via HF revision history, but the local copies were gone).
+save_total_limit: 40
 load_best_model_at_end: false
 logging_steps: 25
 generation_max_length: 225
