@@ -37,6 +37,10 @@ from tqdm import tqdm
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 
+# Casablanca is multi-country (one config per country); we iterate the
+# dialect-relevant countries only (Maghrebi excluded per memory).
+CASABLANCA_COUNTRIES = ["Egypt", "Jordan", "Palestine", "UAE", "Yemen"]
+
 DATASETS = {
     "cv18": {
         "id": "mozilla-foundation/common_voice_18_0",
@@ -44,13 +48,15 @@ DATASETS = {
         "split": "test",
         "text_field": "sentence",
         "id_field": "path",
-        "trust_remote_code": True,
+        "trust_remote_code": False,  # Mozilla gated — needs `huggingface-cli login`
     },
     "masc-clean": {
         "id": "pain/MASC",
         "split": "clean_test",
         "text_field": "transcript",
         "id_field": "audio_id",
+        # uses a HF dataset script — needs `pip install "datasets<3.0"` since
+        # v3 dropped script support.
         "trust_remote_code": True,
     },
     "masc-noisy": {
@@ -62,29 +68,48 @@ DATASETS = {
     },
     "casablanca": {
         "id": "UBC-NLP/Casablanca",
-        # All countries combined; submit per-country if leaderboard requires it
-        "name": None,
         "split": "test",
         "text_field": "transcription",
         "id_field": None,
-        "trust_remote_code": True,
+        "trust_remote_code": False,  # parquet-based; no script
+        "iter_countries": CASABLANCA_COUNTRIES,
     },
 }
 
 
 def stream_dataset(spec: dict):
-    """Stream a HF dataset row by row."""
-    kw = dict(split=spec["split"], streaming=True,
-              trust_remote_code=spec.get("trust_remote_code", False))
+    """Stream a HF dataset row by row.
+
+    Casablanca is multi-config; iterate the configured country list and
+    yield rows from each.
+    """
+    text_field = spec["text_field"]
+    id_field = spec.get("id_field")
+
+    if spec.get("iter_countries"):
+        # Multi-config dataset (Casablanca): one config per country.
+        for country in spec["iter_countries"]:
+            kw = dict(split=spec["split"], streaming=True, name=country)
+            if spec.get("trust_remote_code"):
+                kw["trust_remote_code"] = True
+            ds = load_dataset(spec["id"], **kw)
+            ds = ds.cast_column("audio", Audio(sampling_rate=16000))
+            for i, row in enumerate(ds):
+                ref = (row.get(text_field) or row.get("text") or
+                       row.get("sentence") or "")
+                rid = (row.get(id_field) if id_field else None) or f"{country}_{i}"
+                yield rid, ref, row["audio"]
+        return
+
+    kw = dict(split=spec["split"], streaming=True)
+    if spec.get("trust_remote_code"):
+        kw["trust_remote_code"] = True
     if spec.get("name"):
         kw["name"] = spec["name"]
     ds = load_dataset(spec["id"], **kw)
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
-    text_field = spec["text_field"]
-    id_field = spec.get("id_field")
     for i, row in enumerate(ds):
-        ref = (row.get(text_field) or
-               row.get("text") or
+        ref = (row.get(text_field) or row.get("text") or
                row.get("sentence") or "")
         rid = (row.get(id_field) if id_field else None) or f"row_{i}"
         yield rid, ref, row["audio"]
