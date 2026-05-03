@@ -18,30 +18,34 @@ The paper draft is in [`paper/paper.md`](paper/paper.md). Deployment runbooks fo
 - 🤗 [Interactive demo](https://huggingface.co/spaces/dev-ahmedhany/whisper-arabic-dialects) — Gradio Space, side-by-side vs zero-shot
 - 🌐 [Project case study](https://hany.dev/case-studies/whisper-arabic-dialects)
 
-## Headline results — v3 large-v3 fine-tune on mixed-domain test sets
+## Headline results — v3 large-v3 fine-tune (clean held-out test, May 2026)
 
-Held-out 4-dialect test (n=100/dialect). Egyptian + Levantine are **50% Casablanca conversational + 50% broadcast** (MGB-3, MASC). Gulf is 100% Casablanca (no public broadcast Gulf source); MSA is 100% FLEURS broadcast. Same recordings + decoding config used for both rows. Both: CT2 int8, beam=2, 8 threads, c3-standard-8.
+> **Note:** Earlier headline numbers in this README were inflated by a test-set contamination (96 of 728 utterances overlapped with the training pool — 50 MGB-3-train rows reused as Egyptian test, 46 MASC-train rows as Levantine test). Those numbers have been removed. The table below uses **only Casablanca *test* split rows** (built by [`scripts/build_v3_test_clean.py`](scripts/build_v3_test_clean.py), which asserts no overlap against the training JSONL before writing). Postmortem: [`deploy/07_contamination_postmortem.md`](deploy/07_contamination_postmortem.md).
 
-| Dialect | Test composition | Zero-shot Whisper-large-v3 | **v3-ft (this work, ckpt-4750)** | Δ |
+Clean held-out 4-dialect test (n=100/dialect, all conversational Casablanca-test for dialects, FLEURS-test for MSA). Same decoding config across rows: **CT2 int8, beam=2, 8 threads, c3-standard-8** (Sapphire Rapids).
+
+| Dialect | Test source | ZS Whisper-large-v3 | **FT-v3-ckpt-4750 (this work)** | Δ |
 |---|---|---:|---:|---:|
-| MSA | FLEURS broadcast | **8.51%** | 10.52% | +2.01 |
-| Egyptian | 50 Casablanca + 50 MGB-3 | 38.48% | **23.90%** | **−14.58 pp** ✅ |
-| Levantine | 50 Casablanca JO + 50 MASC | 37.70% | **30.63%** | **−7.07 pp** ✅ |
-| Gulf | Casablanca UAE | 52.72% | **41.46%** | **−11.26 pp** ✅ |
-| **avg-4** | | 34.35% | **26.63%** | **−7.72 pp** ✅ |
+| MSA | FLEURS test | **8.35%** | 10.84% | +2.49 |
+| Egyptian | Casablanca Egypt test | 50.38% | **40.00%** | **−10.38 pp** ✅ |
+| Levantine | Casablanca Jordan test | 37.77% | **30.24%** | **−7.53 pp** ✅ |
+| Gulf | Casablanca UAE test | 49.48% | **43.35%** | **−6.13 pp** ✅ |
+| **avg-4** | | 36.50% | **31.11%** | **−5.39 pp** ✅ |
 
-**v3-ft beats zero-shot Whisper-large-v3 by 7.72 pp average** on the mixed-domain test. Double-digit gains on Egyptian (−14.58) and Gulf (−11.26), strong on Levantine (−7.07). MSA loses 2.01 pp — known dialect-vs-MSA tradeoff that v4 (planned) addresses with an MSA-rebalanced 74h+ mix.
+**FT-v3 beats zero-shot Whisper-large-v3 by 5.39 pp average** on the contamination-free test. Double-digit gain on Egyptian (−10.38), strong on Levantine (−7.53) and Gulf (−6.13). MSA loses 2.49 pp — known dialect-vs-MSA tradeoff that v4 (planned) addresses with an MSA-rebalanced 74 h+ mix.
 
-For the smaller turbo variant (better on MSA, smaller model, similar dialect numbers as the older v2 result):
-| Dialect | Zero-shot turbo | **v2-ft turbo** | Δ |
-|---|---:|---:|---:|
-| MSA | 10.20% | 11.42% | +1.22 |
-| Egyptian | 44.61% | **36.09%** | **−8.52** ✅ |
-| Levantine | 41.53% | 40.49% | −1.04 (tied) |
-| Gulf | 59.00% | **53.92%** | **−5.08** ✅ |
-| **avg-4** | 38.84% | **35.48%** | **−3.35 pp** ✅ |
+### Cross-family comparison (same clean test, May 2026)
 
-The v3 large-v3 fine-tune is the new state-of-the-art for this project. Reproduction in [`deploy/06_v3_data_and_eval.md`](deploy/06_v3_data_and_eval.md).
+| Model | Params | Backend / quant | MSA | Egyptian | Levantine | Gulf | avg-4 |
+|---|---:|---|---:|---:|---:|---:|---:|
+| ZS Whisper-large-v3-turbo | 0.81B | CT2 int8, c3-standard-8 | 10.20 | 52.09 | 41.49 | 52.81 | 39.15 |
+| ZS Whisper-large-v3 | 1.55B | CT2 int8, c3-standard-8 | 8.35 | 50.38 | 37.77 | 49.48 | 36.50 |
+| Qwen3-ASR-1.7B | 1.7B | BF16, L4 GPU | 8.67 | 57.53 | 39.73 | 48.54 | 38.62 |
+| **FT-v3-ckpt-4750 (this work)** | 1.55B | CT2 int8, c3-standard-8 | 10.84 | **40.00** | **30.24** | **43.35** | **31.11** |
+
+FT-v3-ckpt-4750 is the lowest-WER row on every dialect except MSA. Reproduction in [`deploy/06_v3_data_and_eval.md`](deploy/06_v3_data_and_eval.md) and [`deploy/07_contamination_postmortem.md`](deploy/07_contamination_postmortem.md).
+
+The v2-turbo numbers (paper §6.5) used the same now-deprecated mixed test set and need re-evaluation on the clean splits — those rows have been removed pending re-test.
 
 ### Dialects scoped out
 
