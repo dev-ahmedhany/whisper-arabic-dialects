@@ -47,29 +47,36 @@ DATASETS = {
         # Oct 2025 (migrated to mozilla-data-collective.org). The
         # community mirror at fsicoli/common_voice_18_0 holds the same
         # data and is what the Wang et al. 2024 leaderboard's
-        # `models/whisper.py` would now resolve to in practice.
+        # `models/whisper.py` would now resolve to in practice. Loaded
+        # via HF script => trust_remote_code=True.
         "id": "fsicoli/common_voice_18_0",
         "name": "ar",
         "split": "test",
         "text_field": "sentence",
         "id_field": "path",
-        "trust_remote_code": False,  # gated — needs HF token + repo terms acceptance
+        "trust_remote_code": True,  # gated; needs HF token + repo terms acceptance
     },
+    # MASC has splits=[train, dev, test] and a `type` column with values
+    # "c" (clean) or "n" (noisy). The leaderboard reports MASC-Clean and
+    # MASC-Noisy as two cells — we materialize them by filtering the
+    # single `test` split here.
     "masc-clean": {
         "id": "pain/MASC",
-        "split": "clean_test",
-        "text_field": "transcript",
-        "id_field": "audio_id",
-        # uses a HF dataset script — needs `pip install "datasets<3.0"` since
-        # v3 dropped script support.
+        "split": "test",
+        "text_field": "text",
+        "id_field": "video_id",
         "trust_remote_code": True,
+        "filter_field": "type",
+        "filter_value": "c",
     },
     "masc-noisy": {
         "id": "pain/MASC",
-        "split": "noisy_test",
-        "text_field": "transcript",
-        "id_field": "audio_id",
+        "split": "test",
+        "text_field": "text",
+        "id_field": "video_id",
         "trust_remote_code": True,
+        "filter_field": "type",
+        "filter_value": "n",
     },
     "casablanca": {
         "id": "UBC-NLP/Casablanca",
@@ -113,7 +120,11 @@ def stream_dataset(spec: dict):
         kw["name"] = spec["name"]
     ds = load_dataset(spec["id"], **kw)
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
+    filt_field = spec.get("filter_field")
+    filt_value = spec.get("filter_value")
     for i, row in enumerate(ds):
+        if filt_field and row.get(filt_field) != filt_value:
+            continue
         ref = (row.get(text_field) or row.get("text") or
                row.get("sentence") or "")
         rid = (row.get(id_field) if id_field else None) or f"row_{i}"
