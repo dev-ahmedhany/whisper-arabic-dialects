@@ -43,12 +43,17 @@ CASABLANCA_COUNTRIES = ["Egypt", "Jordan", "Palestine", "UAE", "Yemen"]
 
 DATASETS = {
     "cv18": {
-        "id": "mozilla-foundation/common_voice_18_0",
+        # Mozilla pulled mozilla-foundation/common_voice_18_0 from HF in
+        # Oct 2025 (migrated to mozilla-data-collective.org). The
+        # community mirror at fsicoli/common_voice_18_0 holds the same
+        # data and is what the Wang et al. 2024 leaderboard's
+        # `models/whisper.py` would now resolve to in practice.
+        "id": "fsicoli/common_voice_18_0",
         "name": "ar",
         "split": "test",
         "text_field": "sentence",
         "id_field": "path",
-        "trust_remote_code": False,  # Mozilla gated — needs `huggingface-cli login`
+        "trust_remote_code": False,  # gated — needs HF token + repo terms acceptance
     },
     "masc-clean": {
         "id": "pain/MASC",
