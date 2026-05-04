@@ -155,15 +155,14 @@ def write_jsonl(
 
 
 # Per-dataset specs.
+# NOTE: MGB-2 (QCRI/mgb2, ~1,190h, the largest single Arabic ASR resource)
+# is intentionally excluded from v4. The dataset ships as 118GB train.tar.gz
+# + dev/test tar folders that don't fit HF datasets' WebDataset loader, and
+# extraction + transcription parsing (.stm-style) is non-trivial. v5 follow-up
+# can add it via a custom downloader; v4 ships at 1,451h without it.
 DATASET_SPECS = [
-    dict(
-        spec_name="mgb2",
-        train=[dict(id="QCRI/mgb2", split="train", text="text", dialect="msa",
-                    trust_remote_code=True)],
-        test=[dict(id="QCRI/mgb2", split="test", text="text", dialect="msa",
-                   trust_remote_code=True)],
-        audio_subdir="mgb2",
-    ),
+    # MGB-2 placeholder — disabled in v4. Keep here so re-enabling is a 1-line edit.
+    # dict(spec_name="mgb2", ...),
     dict(
         spec_name="masc",
         train=[dict(id="pain/MASC", split="train", text="text", dialect="multi",
@@ -180,18 +179,25 @@ DATASET_SPECS = [
     ),
     dict(
         spec_name="sada",
-        # SADA's `audio` column is the FULL SHOW (~10 min) but each row is
-        # a 5-15s segment defined by SegmentStart/SegmentEnd (seconds).
-        # Without slicing we'd write 17 MB/row × 200K rows = 3.4 TB. Slice
-        # to the segment to drop disk usage to ~70 GB total.
-        train=[dict(id="m6011/sada2022", split="train", text="ProcessedText",
-                    dialect="gulf", trust_remote_code=True,
-                    extra_meta=("SpeakerDialect", "Environment", "Category"),
-                    slice_start_field="SegmentStart", slice_end_field="SegmentEnd")],
-        test=[dict(id="m6011/sada2022", split="test", text="ProcessedText",
-                   dialect="gulf", trust_remote_code=True,
-                   extra_meta=("SpeakerDialect", "Environment", "Category"),
-                   slice_start_field="SegmentStart", slice_end_field="SegmentEnd")],
+        # MohamedRashad/SADA22 is the SADA mirror with proper segment-level
+        # splits (train=242K rows ~647h, validation=5.14K ~10h, test=6.19K ~10h)
+        # and pre-cleaned columns. The original m6011/sada2022 only had 6.19K
+        # show-grouped rows that needed manual segment slicing.
+        train=[
+            dict(id="MohamedRashad/SADA22", split="train",
+                 text=("cleaned_text", "text"),
+                 dialect="gulf", trust_remote_code=False,
+                 extra_meta=("speaker_dialect", "speaker_age", "speaker_gender")),
+            dict(id="MohamedRashad/SADA22", split="validation",
+                 text=("cleaned_text", "text"),
+                 dialect="gulf", trust_remote_code=False,
+                 extra_meta=("speaker_dialect", "speaker_age", "speaker_gender"),
+                 suffix="val"),
+        ],
+        test=[dict(id="MohamedRashad/SADA22", split="test",
+                   text=("cleaned_text", "text"),
+                   dialect="gulf", trust_remote_code=False,
+                   extra_meta=("speaker_dialect", "speaker_age", "speaker_gender"))],
         audio_subdir="sada",
     ),
     dict(
