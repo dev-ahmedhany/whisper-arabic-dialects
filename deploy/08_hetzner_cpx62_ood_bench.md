@@ -137,30 +137,3 @@ production-CPU table:
 Open speech-LLMs (Gemma, Voxtral, Qwen3-Omni) require GPU for practical
 deployment as of May 2026 and are out of scope for this paper's
 production-CPU narrative.
-
-## Footnote: Cohere transcribe-03 + Riva-LM benches abandoned
-
-Two follow-on benches to add Cohere transcribe-03-2026 (open-weights Apache-2.0,
-the 2026-Q1 leaderboard #1 on English) and the NGC Riva Conformer + KenLM (the
-exact Open Universal Arabic ASR Leaderboard #6 entry, 32.91% avg WER) on the
-same MediaSpeech-200 protocol failed for the same reproducible reason: about
-10 minutes after first SSH contact, every Hetzner box in our experiment lost
-the contents of `~/.ssh/authorized_keys` and became unreachable. Even the
-`chattr +i` immutable-bit and cloud-init `user-data` workarounds did not save
-the auth state through the box's apt + pip install phase. The benches almost
-certainly *completed* in the boxes' tmux sessions but the result files were
-inaccessible without disk-snapshot recovery, which we judged not worth the
-~$0.50 + 10-min overhead per attempt. Either bench can be re-attempted on
-GCP c3-standard-8 (where SSH stays stable indefinitely) as a follow-up.
-
-## Footnote: cheap-box test (CX23 / CPX32) abandoned
-
-Attempts to bench FastConformer on Hetzner's cheaper boxes (CX23 at $0.008/hr,
-CPX32 at $0.026/hr) failed due to a reproducible SSH-key-drop issue on those
-instance types: cloud-init successfully placed our public key, the setup
-script ran (apt install + NeMo install both completed cleanly with NeMo even
-fitting in 4GB RAM on CX23), but ~5-10 min after first contact the SSH
-authorized_keys file was overwritten and the box became unreachable. Behavior
-reproduced on three independent server creations across `fsn1`/`hel1`. We
-moved on with CPX62 numbers as the production-CPU canonical reference; a
-v2 follow-up could investigate via Hetzner rescue mode or a different OS image.
