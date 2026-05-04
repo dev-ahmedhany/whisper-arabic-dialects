@@ -1,0 +1,58 @@
+# v4 — curated 234h Arabic FT of whisper-large-v3.
+# Cap each source so MASC/SADA don't dominate; balanced 65h MSA + 65h
+# Levantine + 65h Gulf + 35h Casablanca-multi + 4h FLEURS.
+
+model_name: "openai/whisper-large-v3"
+language: "arabic"
+task: "transcribe"
+attn_implementation: "sdpa"
+
+train_jsonl: "test_sets/train_v4.jsonl"
+val_jsonl:   "test_sets/val_v4.jsonl"
+
+# LoRA — same recipe as v3 (verified int8-safe, paper §6.5)
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_modules: ["q_proj", "v_proj", "k_proj", "out_proj", "fc1", "fc2"]
+
+# Optimization
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 2
+gradient_accumulation_steps: 4   # effective batch 16
+learning_rate: 1.0e-4
+warmup_ratio: 0.05
+lr_scheduler_type: cosine
+num_train_epochs: 5              # ceiling — won't hit; max_steps governs
+max_steps: 20000                 # ~3 epochs at 105K rows / 16 batch
+optim: "paged_adamw_8bit"
+gradient_checkpointing: true
+bf16: true
+
+# Eval / checkpointing — eval often, early-stop on val plateau
+eval_strategy: "steps"
+eval_steps: 500
+save_strategy: "steps"
+save_steps: 500                  # 40 saves
+save_total_limit: 40
+load_best_model_at_end: true
+metric_for_best_model: "wer"
+greater_is_better: false
+early_stopping_patience: 3       # 3 evals without WER improvement
+early_stopping_threshold: 0.001
+
+logging_steps: 25
+generation_max_length: 225
+seed: 42
+
+output_dir: "checkpoints/whisper-large-v3-ar-lora-v4"
+run_name: "whisper-large-v3-ar-lora-v4-curated-234h"
+report_to: ["tensorboard", "wandb"]
+wandb_project: "whisper-arabic-ft"
+wandb_tags: ["large-v3", "qlora", "v4", "234h-curated"]
+
+# Auto-push every save to a NEW HF repo per memory/hf_versioning.md
+push_to_hub: true
+hub_model_id: "dev-ahmedhany/whisper-large-v3-arabic-ft-v4-lora"
+hub_strategy: "every_save"
+hub_private_repo: false
