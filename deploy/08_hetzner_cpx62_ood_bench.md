@@ -138,6 +138,21 @@ Open speech-LLMs (Gemma, Voxtral, Qwen3-Omni) require GPU for practical
 deployment as of May 2026 and are out of scope for this paper's
 production-CPU narrative.
 
+## Footnote: Cohere transcribe-03 + Riva-LM benches abandoned
+
+Two follow-on benches to add Cohere transcribe-03-2026 (open-weights Apache-2.0,
+the 2026-Q1 leaderboard #1 on English) and the NGC Riva Conformer + KenLM (the
+exact Open Universal Arabic ASR Leaderboard #6 entry, 32.91% avg WER) on the
+same MediaSpeech-200 protocol failed for the same reproducible reason: about
+10 minutes after first SSH contact, every Hetzner box in our experiment lost
+the contents of `~/.ssh/authorized_keys` and became unreachable. Even the
+`chattr +i` immutable-bit and cloud-init `user-data` workarounds did not save
+the auth state through the box's apt + pip install phase. The benches almost
+certainly *completed* in the boxes' tmux sessions but the result files were
+inaccessible without disk-snapshot recovery, which we judged not worth the
+~$0.50 + 10-min overhead per attempt. Either bench can be re-attempted on
+GCP c3-standard-8 (where SSH stays stable indefinitely) as a follow-up.
+
 ## Footnote: cheap-box test (CX23 / CPX32) abandoned
 
 Attempts to bench FastConformer on Hetzner's cheaper boxes (CX23 at $0.008/hr,
