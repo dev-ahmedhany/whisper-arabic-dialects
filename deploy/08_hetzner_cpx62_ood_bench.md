@@ -83,13 +83,17 @@ One box per model, run in parallel; deleted as soon as each finished.
 
 ## Cost-per-audio-minute (CPX62 CPU, $0.0953/hr)
 
-| Model | minutes-per-$ | $-per-1000-audio-min |
-|---|---:|---:|
-| FastConformer (greedy CTC) | **8,200** | $0.122 |
-| ZS Whisper-large-v3 | 100 | $9.50 |
-| FT-v3-ckpt-4750 | 92 | $10.30 |
+Formula: `$/audio-min = ($/hr) × RTF / 60`
 
-The FastConformer cost-per-minute number is the headline production-CPU result.
+| Model | RTF | $-per-1000-audio-min | audio-min-per-$ |
+|---|---:|---:|---:|
+| FastConformer (greedy CTC) | 0.012 | **$0.019** | **52,400** |
+| ZS Whisper-large-v3 (CT2 int8) | 0.477 | $0.758 | 1,320 |
+| FT-v3-ckpt-4750 (CT2 int8) | 0.519 | $0.825 | 1,210 |
+
+The FastConformer at **$0.019 per 1000 audio-minutes** is the headline production-CPU
+result. That's ~$0.001 per hour of audio transcribed — enabling at-scale Arabic ASR
+deployment for vanishing per-call cost.
 
 ## Reproduction
 
