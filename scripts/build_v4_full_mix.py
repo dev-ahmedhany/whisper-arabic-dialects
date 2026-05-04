@@ -171,10 +171,15 @@ DATASET_SPECS = [
     ),
     dict(
         spec_name="sada",
-        train=[dict(id="m6011/sada2022", split="train", text=("transcript", "text"),
-                    dialect="gulf", trust_remote_code=True)],
-        test=[dict(id="m6011/sada2022", split="test", text=("transcript", "text"),
-                   dialect="gulf", trust_remote_code=True)],
+        # SADA's text column is `ProcessedText`; tagging dialect from the
+        # SpeakerDialect column (Khaliji / Najdi / Hijazi / etc.) lets the
+        # train mix get fine-grained Saudi-dialect coverage.
+        train=[dict(id="m6011/sada2022", split="train", text="ProcessedText",
+                    dialect="gulf", trust_remote_code=True,
+                    extra_meta=("SpeakerDialect", "Environment", "Category"))],
+        test=[dict(id="m6011/sada2022", split="test", text="ProcessedText",
+                   dialect="gulf", trust_remote_code=True,
+                   extra_meta=("SpeakerDialect", "Environment", "Category"))],
         audio_subdir="sada",
     ),
     dict(
