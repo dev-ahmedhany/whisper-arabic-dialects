@@ -100,9 +100,23 @@ def main() -> None:
                 with torch.inference_mode():
                     out = model.generate(**inputs, max_new_tokens=256, do_sample=False)
                 text = processor.decode(out[0][input_len:], skip_special_tokens=True)
+                # Gemma sometimes returns the chat dict literal as a string —
+                # strip the {'role':'assistant','content':'...'} wrapper.
                 if hasattr(processor, "parse_response"):
                     try:
-                        text = processor.parse_response(text)
+                        parsed = processor.parse_response(text)
+                        if isinstance(parsed, dict) and "content" in parsed:
+                            text = parsed["content"]
+                        elif isinstance(parsed, str):
+                            text = parsed
+                    except Exception:
+                        pass
+                if isinstance(text, str) and text.lstrip().startswith("{") and "content" in text:
+                    import ast
+                    try:
+                        d = ast.literal_eval(text.strip())
+                        if isinstance(d, dict) and "content" in d:
+                            text = d["content"]
                     except Exception:
                         pass
                 ttfts_ms.append((time.perf_counter() - t0) * 1000.0)
