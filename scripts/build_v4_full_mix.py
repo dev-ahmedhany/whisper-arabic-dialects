@@ -59,6 +59,8 @@ def write_jsonl(
     streaming: bool = True,
     max_rows: int | None = None,
     extra_meta_keys: tuple[str, ...] = (),
+    slice_start_field: str | None = None,
+    slice_end_field: str | None = None,
 ) -> int:
     """Stream a HF dataset → JSONL with audio materialized to local 16 kHz WAVs.
 
@@ -116,6 +118,13 @@ def write_jsonl(
                     if sr != 16000:
                         import librosa
                         arr = librosa.resample(arr, orig_sr=sr, target_sr=16000)
+                    # SADA-style: full show audio; slice by SegmentStart/End
+                    if slice_start_field and slice_end_field:
+                        s = float(row.get(slice_start_field, 0.0))
+                        e = float(row.get(slice_end_field, 0.0))
+                        if e > s:
+                            i0, i1 = int(s * 16000), int(e * 16000)
+                            arr = arr[i0:i1]
                     sf.write(str(audio_path), arr, 16000, subtype="PCM_16")
                 except Exception as e:
                     print(f"  [audio fail @{i}]: {e}", flush=True)
@@ -171,15 +180,18 @@ DATASET_SPECS = [
     ),
     dict(
         spec_name="sada",
-        # SADA's text column is `ProcessedText`; tagging dialect from the
-        # SpeakerDialect column (Khaliji / Najdi / Hijazi / etc.) lets the
-        # train mix get fine-grained Saudi-dialect coverage.
+        # SADA's `audio` column is the FULL SHOW (~10 min) but each row is
+        # a 5-15s segment defined by SegmentStart/SegmentEnd (seconds).
+        # Without slicing we'd write 17 MB/row × 200K rows = 3.4 TB. Slice
+        # to the segment to drop disk usage to ~70 GB total.
         train=[dict(id="m6011/sada2022", split="train", text="ProcessedText",
                     dialect="gulf", trust_remote_code=True,
-                    extra_meta=("SpeakerDialect", "Environment", "Category"))],
+                    extra_meta=("SpeakerDialect", "Environment", "Category"),
+                    slice_start_field="SegmentStart", slice_end_field="SegmentEnd")],
         test=[dict(id="m6011/sada2022", split="test", text="ProcessedText",
                    dialect="gulf", trust_remote_code=True,
-                   extra_meta=("SpeakerDialect", "Environment", "Category"))],
+                   extra_meta=("SpeakerDialect", "Environment", "Category"),
+                   slice_start_field="SegmentStart", slice_end_field="SegmentEnd")],
         audio_subdir="sada",
     ),
     dict(
@@ -242,6 +254,8 @@ def run_spec(s: dict, audio_root: Path, out_dir: Path, only_split: str | None = 
                 filter_field=item.get("filter_field"),
                 filter_value=item.get("filter_value"),
                 extra_meta_keys=item.get("extra_meta", ()),
+                slice_start_field=item.get("slice_start_field"),
+                slice_end_field=item.get("slice_end_field"),
             )
 
 
