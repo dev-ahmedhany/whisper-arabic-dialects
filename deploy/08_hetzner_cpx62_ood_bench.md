@@ -50,6 +50,7 @@ One box per model, run in parallel; deleted as soon as each finished.
 | **dev-ahmedhany FT-v3-ckpt-4750 (CT2 int8)** | **20.38** | [18.81, 21.97] | 0.519 | 5.4 GB |
 | OpenAI Whisper-large-v3 (CT2 int8) | 20.86 | [19.08, 22.59] | 0.477 | 3.5 GB |
 | nvidia/stt_ar_fastconformer_hybrid_large_pc_v1.0 (greedy CTC) | 24.04 | [22.43, 25.70] | **0.012** ⚡ | 1.9 GB |
+| **CohereLabs/cohere-transcribe-03-2026 (fp32)** | **44.36** ⚠️ | — | 0.194 | 13.1 GB |
 | google/gemma-4-E2B-it (bf16, CPU) | — | — | — | OOM-stall ⚠️ |
 
 ### Wall-clock per box
@@ -81,6 +82,18 @@ One box per model, run in parallel; deleted as soon as each finished.
    (audio encoder + 2B LLM + activation memory ~30 GB peak). Multimodal LLMs
    for Arabic ASR are GPU-deployment only as of May 2026.
 
+5. **Cohere transcribe-03-2026 ranks #1 on the Arabic leaderboard but lands worst on OOD**:
+   30.67 % avg WER on the 6-dataset Arabic leaderboard becomes 44.36 % on
+   MediaSpeech-Arabic — twice as bad as either Whisper variant. Cohere's
+   leaderboard advantage comes from its strong cells on training-adjacent
+   data (CV / MASC-Clean) and collapses on truly held-out broadcast where
+   Whisper's multilingual pretraining dominates. Also: 13 GB RAM (fp32 only
+   in the published HF artifact — no int8 path) is the heaviest CPU
+   footprint of all tested models, making it impractical for $/hour CPU
+   tiers below CPX62. Cohere also publishes **no timestamps and no
+   diarization** support in the model card, ruling it out for downstream
+   transcript-aligned applications.
+
 ## Cost-per-audio-minute (CPX62 CPU, $0.0953/hr)
 
 Formula: `$/audio-min = ($/hr) × RTF / 60`
@@ -90,6 +103,7 @@ Formula: `$/audio-min = ($/hr) × RTF / 60`
 | FastConformer (greedy CTC) | 0.012 | **$0.019** | **52,400** |
 | ZS Whisper-large-v3 (CT2 int8) | 0.477 | $0.758 | 1,320 |
 | FT-v3-ckpt-4750 (CT2 int8) | 0.519 | $0.825 | 1,210 |
+| Cohere transcribe-03-2026 (fp32) | 0.194 | $0.308 | 3,250 |
 
 The FastConformer at **$0.019 per 1000 audio-minutes** is the headline production-CPU
 result. That's ~$0.001 per hour of audio transcribed — enabling at-scale Arabic ASR
