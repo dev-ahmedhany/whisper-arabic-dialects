@@ -1,0 +1,20 @@
+{
+  "cpu": "4x AMD EPYC-Rome @ 2.45 GHz (x86_64, QEMU-virtualized)",
+  "rss_peak_mib": 1101.12890625,
+  "rtf": 0.04040443260199987,
+  "realtime_factor": 24.749759756569475,
+  "hours_per_day": 593.9942341576674,
+  "hours_per_month": 17819.82702473002,
+  "cost_per_hour_audio_usd": 0.000448376967347193,
+  "cost_per_min_audio_usd": 7.472949455786551e-06,
+  "n_runs": 50,
+  "hetzner_type": "cx33",
+  "hetzner_location": "hel1",
+  "hetzner_image": "ubuntu-24.04",
+  "hetzner_monthly_usd": 7.99,
+  "hetzner_hourly_usd": 0.013,
+  "cpu_architecture": "x86_64",
+  "cpu_model": "AMD EPYC-Rome",
+  "cpu_mhz": 2445.404,
+  "memory_total_gib": 8.0
+}
