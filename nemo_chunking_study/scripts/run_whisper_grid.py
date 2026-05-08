@@ -1,0 +1,179 @@
+"""Whisper chunking grid — single model, both datasets, parameterized.
+
+Spawned in parallel across multiple VMs (one per Whisper variant) so the
+full study completes in one VM-budget instead of N×.
+"""
+from __future__ import annotations
+import argparse, gc, json, os, re, time, unicodedata
+import numpy as np, psutil, soundfile as sf, jiwer
+
+PER_RECITER = 50; MAX_RECITERS = 3; SR = 16000
+TASHKEEL = re.compile(r'[ً-ٰۖ-ۭ]')
+
+def norm(t):
+    t = unicodedata.normalize('NFC', t or '')
+    t = TASHKEEL.sub('', t)
+    return re.sub(r'\s+', ' ', t).strip()
+
+def to16k(s, sr):
+    if s.ndim > 1: s = s.mean(axis=1)
+    if sr != SR:
+        ratio = SR / sr
+        idx = np.linspace(0, len(s)-1, int(len(s)*ratio)).astype('int')
+        s = s[idx].astype('float32'); sr = SR
+    return s, sr
+
+def boundary_dedup(prev, new, max_n=5):
+    if not prev or not new: return new
+    n_max = min(max_n, len(prev), len(new))
+    for n in range(n_max, 0, -1):
+        if prev[-n:] == new[:n]:
+            return new[n:]
+    return new
+
+ap = argparse.ArgumentParser()
+ap.add_argument('--model-id', required=True, help='HF model ID, e.g. openai/whisper-tiny')
+ap.add_argument('--model-name', required=True, help='short name for output JSON')
+ap.add_argument('--out', default='/tmp/results/whisper_grid.jsonl')
+args = ap.parse_args()
+
+print(f'--- load {args.model_name} ({args.model_id}) ---', flush=True)
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import torch
+torch.set_num_threads(4)
+proc_obj = WhisperProcessor.from_pretrained(args.model_id)
+model = WhisperForConditionalGeneration.from_pretrained(args.model_id)
+getattr(model, 'eval')()
+if hasattr(model.generation_config, 'language'):
+    model.generation_config.language = 'arabic'
+if hasattr(model.generation_config, 'task'):
+    model.generation_config.task = 'transcribe'
+print(f'{args.model_name} loaded', flush=True)
+proc = psutil.Process(os.getpid())
+
+def transcribe_chunk(samples, sr):
+    inputs = proc_obj(samples, sampling_rate=sr, return_tensors='pt')
+    t0 = time.perf_counter()
+    with torch.no_grad():
+        ids = model.generate(inputs.input_features, num_beams=1, do_sample=False, max_new_tokens=256)
+    dt = time.perf_counter() - t0
+    text = proc_obj.batch_decode(ids, skip_special_tokens=True)[0]
+    return norm(text), dt
+
+def chunks_fixed(samples, win_ms, ov_ms):
+    win = int(win_ms * SR / 1000); ov = int(ov_ms * SR / 1000)
+    step = max(1, win - ov)
+    out = []
+    for start in range(0, len(samples), step):
+        c = samples[start:start+win]
+        if len(c) < SR * 0.1: continue
+        out.append(c)
+        if start + win >= len(samples): break
+    return out
+
+def transcribe_all(clips, chunker_fn, dedup=True):
+    refs, hyps = [], []
+    audio_s = decode_s = 0.0; nrw = 0; per = {}; basmala = 0
+    for c in clips:
+        chunks = chunker_fn(c['samples'])
+        all_words, last = [], []
+        for chunk in chunks:
+            text, dt = transcribe_chunk(chunk, SR)
+            decode_s += dt
+            if not text: continue
+            words = [w for w in text.split() if w]
+            if dedup: words = boundary_dedup(last, words)
+            all_words.extend(words)
+            last = words
+        hyp = ' '.join(all_words)
+        audio_s += len(c['samples']) / SR
+        refs.append(c['ref']); hyps.append(hyp)
+        nrw += len(c['ref'].split())
+        per.setdefault(c['subgroup'], []).append((c['ref'], hyp))
+        if hyp.startswith('بسم') and not c['ref'].startswith('بسم'): basmala += 1
+    return {
+        'overall_wer': jiwer.wer(refs, hyps),
+        'audio_seconds': audio_s, 'decode_seconds': decode_s,
+        'rtf': decode_s/audio_s if audio_s>0 else None,
+        'words_per_sec': nrw/decode_s if decode_s>0 else None,
+        'per_subgroup_wer': {r: jiwer.wer([x[0] for x in v], [x[1] for x in v]) for r,v in per.items() if v},
+        'basmala_hallucinations': basmala,
+        'n_clips': len(refs),
+    }
+
+# Datasets
+print('--- cache everyayah ---', flush=True)
+from datasets import load_dataset
+ds = load_dataset('tarteel-ai/everyayah', split='train', streaming=True, token=os.environ['HF_TOKEN'])
+everyayah = []; counts = {}
+for row in ds:
+    rec = (row.get('reciter') or '').lower()
+    if not rec: continue
+    if counts.get(rec, 0) >= PER_RECITER: continue
+    if rec not in counts and len(counts) >= MAX_RECITERS: continue
+    audio = row.get('audio')
+    if audio is None: continue
+    sa = audio.get_all_samples()
+    arr = sa.data.numpy()
+    if arr.ndim > 1: arr = arr.mean(axis=0)
+    arr = np.asarray(arr, dtype='float32')
+    samples, sr = to16k(arr, sa.sample_rate)
+    counts[rec] = counts.get(rec, 0) + 1
+    everyayah.append({'samples': samples, 'sr': sr, 'subgroup': rec, 'ref': norm(row.get('text', ''))})
+    if all(c >= PER_RECITER for c in counts.values()) and len(counts) >= MAX_RECITERS: break
+print(f'everyayah: {len(everyayah)} clips', flush=True)
+
+print('--- cache common_voice_17 ---', flush=True)
+cv = []
+try:
+    ds = load_dataset('mozilla-foundation/common_voice_17_0', 'ar', split='test',
+                      streaming=True, token=os.environ['HF_TOKEN'])
+    for row in ds:
+        if len(cv) >= 150: break
+        audio = row.get('audio')
+        sentence = row.get('sentence', '')
+        if audio is None or not sentence: continue
+        sa = audio.get_all_samples()
+        arr = sa.data.numpy()
+        if arr.ndim > 1: arr = arr.mean(axis=0)
+        arr = np.asarray(arr, dtype='float32')
+        samples, sr = to16k(arr, sa.sample_rate)
+        cv.append({'samples': samples, 'sr': sr, 'subgroup': 'cv-ar', 'ref': norm(sentence)})
+    print(f'common_voice: {len(cv)} clips', flush=True)
+except Exception as e:
+    print(f'cv failed: {e}', flush=True)
+
+datasets = {}
+if cv: datasets['common_voice_17'] = cv
+if everyayah: datasets['everyayah'] = everyayah
+
+# Chunk grid (focused — Whisper has a 30s training ceiling and shouldn't
+# benefit from chunking the way NeMo does, but we test the same configs)
+strategies = []
+strategies.append(('full', lambda s: [s]))
+for win in [4000, 8000, 10000, 12000, 15000, 20000, 30000]:
+    for ov in [0, 500]:
+        if ov >= win: continue
+        strategies.append((f'fixed_{win}_{ov}', lambda s, w=win, o=ov: chunks_fixed(s, w, o)))
+
+print(f'\n{len(strategies)} strategies × {len(datasets)} datasets = {len(strategies)*len(datasets)} configs', flush=True)
+out_f = open(args.out, 'a')
+total = 0
+for ds_name, clips in datasets.items():
+    if not clips: continue
+    for name, fn in strategies:
+        total += 1
+        print(f'\n[{total}] {args.model_name} {name} on {ds_name}', flush=True)
+        gc.collect()
+        try:
+            res = transcribe_all(clips, fn)
+            res['strategy'] = name
+            res['dataset'] = ds_name
+            res['model'] = args.model_name
+            out_f.write(json.dumps(res, ensure_ascii=False) + '\n')
+            out_f.flush()
+            print(f'  WER={res["overall_wer"]:.4f} RTF={res["rtf"]:.3f} wps={res["words_per_sec"]:.1f} بسم={res["basmala_hallucinations"]}', flush=True)
+        except Exception as e:
+            print(f'  err: {e}', flush=True)
+out_f.close()
+print(f'\n=== {args.model_name} DONE ===', flush=True)

@@ -264,3 +264,88 @@ Whisper baselines:
 
 Reference `nemo_streaming` package (used in production by Murattil app):
 <https://github.com/dev-ahmedhany/nemo-streaming> *(repo: pending push)*.
+
+---
+
+## Related work — what's been tried before
+
+Five recent papers shape the methodology and define what's already known.
+Each addresses a slightly different question; ours sits in the gap they
+leave.
+
+| Paper | Core idea | What we borrow |
+|---|---|---|
+| **Open ASR Leaderboard (arxiv 2510.06961, Oct 2025)** | 60+ systems × 11 datasets × multilingual + long-form tracks; standardized normalization, WER + RTFx | Long-form-vs-batch as a separate axis; the BSF metric (`streaming_WER / batch_WER`) |
+| **Pushing the Limits of On-Device Streaming ASR (arxiv 2604.14493)** | 50+ chunking configurations; quantization stack; identifies Nemotron-0.6B int4 as 8.20 % WER + 0.56 s latency Pareto winner | The "delay = chunk + right_context" formula; per-model chunking sweep methodology |
+| **ChunkFormer: Masked Chunking Conformer (HF: khanhld/chunkformer-ctc-large-vie)** | Endless decoding via chunks-with-**relative right context** at the attention level; masked batching (no padding); −7.7 pp absolute WER on long-form vs Conformer | The right-context technique — give each chunk N s of future audio so its encoder doesn't run out of context at the chunk's tail |
+| **WhisperX (Bain et al., 2023)** | Merge short VAD segments to maximize contextual relevance | VAD-merge as a strategy — start from VAD boundaries, merge until reaching target length |
+| **NeMo cache-aware streaming (NVIDIA, 2024)** | Cache-aware streaming attention; flexible latency/accuracy at inference time | Why naive chunking degrades for non-cache-aware models; what the right baseline is |
+
+**The gap our study fills.** All five papers cover **streaming** (chunking
+hurts; how much can we limit the damage). None directly examine
+**chunking as an accuracy-improvement intervention for offline
+transcription** when the audio is *longer than the encoder's training
+distribution*. Our headline finding (NeMo full-audio 27.25 % → 10 s
+chunked 12.64 %) sits in that gap. The mechanism — attention saturation
+past training-clip length — is well-documented; the practical
+"chunk-to-recover-WER" intervention is not.
+
+## Techniques we're testing, mapped to the literature
+
+The kitchen-sink sweep `scripts/run_kitchensink_v2.py` evaluates:
+
+1. **Naive fixed-window** (what most production code does — `whisperx`,
+   `nemo_streaming.dart`, the offline-Whisper subprocess in
+   `mehrab-ai-local`).
+2. **Boundary n-gram dedup** (our v2 — drops longest 1-5 word n-gram
+   match between previous chunk's tail and new chunk's head). Replaces
+   LocalAgreement-2 which fails for our pattern.
+3. **Silence-trim per chunk** (RNNT decoders started from `<s>` emit
+   canonical prefixes when fed silence; trim leading silence first).
+4. **VAD-only chunking** (Silero VAD natural pauses; no max cap).
+5. **VAD + max-cap** (Silero VAD with force-split if segment exceeds
+   N s; combines natural-pause boundaries with attention-saturation
+   protection).
+6. **VAD + max-cap + chunk-start padding** (anti-hallucination test —
+   prepend silence so encoder sees clean speech onset).
+7. **Right-context chunking (ChunkFormer-inspired)** — pad each chunk
+   with N s of future audio for attention context, drop the words
+   from the lookahead region in post-processing. *Pending — to add
+   in v3.*
+8. **Left-context chunking** — pad each chunk with N s of past audio.
+   Drop the words from the prefix region. *Pending v3.*
+9. **WhisperX-style VAD merge** — start from VAD segments, merge
+   adjacent shorts until reaching target window. *Pending v3.*
+
+The first 6 are in v2 right now. 7-9 land in v3 once we have v2
+results to anchor against.
+
+## Reading these papers to refine our framing
+
+A few honest caveats this literature review surfaces:
+
+- **The Open ASR Leaderboard's long-form track exists precisely because
+  chunking strategies affect WER differently across models.** Our
+  finding that chunking *helps* a particular model on a particular
+  domain is consistent with this — they document the variance, we
+  document the positive case.
+- **"Pushing the Limits" tested 15+ chunking configs per model** and
+  observed the same kind of U-shape we see (small chunks hurt,
+  optimal mid-range, very long chunks hurt again — though they
+  attribute the long-end degradation to streaming-mode vs batch-mode
+  rather than attention saturation specifically).
+- **ChunkFormer's right-context idea** is structurally what we should
+  layer on top of our boundary-dedup. Pre-pending the next chunk's
+  first ~2 s and *trimming* the over-emitted words afterward gives
+  the encoder the future context it lacks at chunk boundaries,
+  without the dedup ambiguity of naive overlap.
+
+## Sources
+
+- Open ASR Leaderboard: arXiv:2510.06961 — <https://arxiv.org/abs/2510.06961>
+- Pushing the Limits of On-Device Streaming ASR: arXiv:2604.14493 — <https://arxiv.org/abs/2604.14493>
+- ChunkFormer: <https://huggingface.co/khanhld/chunkformer-ctc-large-vie>
+- WhisperX: arXiv:2303.00747 — <https://arxiv.org/abs/2303.00747>
+- NeMo cache-aware streaming docs: <https://docs.nvidia.com/nemo-framework/user-guide/latest/nemotoolkit/asr/configs.html>
+- Open ASR Leaderboard blog post: <https://huggingface.co/blog/open-asr-leaderboard>
+- SpeechBrain Conformer streaming tutorial: <https://speechbrain.readthedocs.io/en/v1.0.3/tutorials/nn/conformer-streaming-asr.html>
