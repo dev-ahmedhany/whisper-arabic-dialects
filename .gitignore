@@ -44,3 +44,7 @@ wandb/
 # Paper figures regenerated from data
 paper/figures/*.png
 !paper/figures/.gitkeep
+
+# LinkedIn drafts — local-only, never commit
+linkedin_post*.md
+nemo_chunking_study/linkedin_post*.md
