@@ -1,0 +1,4 @@
+{"dataset": "everyayah-quran", "model": "whisper-base-ar-quran", "strategy": "full", "wer": 0.12053333333333334, "rtf": 0.027761869147414856, "n_clips": 150}
+{"dataset": "everyayah-quran", "model": "whisper-base-ar-quran", "strategy": "fixed_11000_100", "wer": 0.18773333333333334, "rtf": 0.035509762269417315, "n_clips": 150}
+{"dataset": "sada22-msa-min8s", "model": "whisper-base-ar-quran", "strategy": "full", "wer": 0.8771621225447083, "rtf": 0.08187299187461419, "n_clips": 100}
+{"dataset": "sada22-msa-min8s", "model": "whisper-base-ar-quran", "strategy": "fixed_11000_100", "wer": 0.8754031075930812, "rtf": 0.10083776425735437, "n_clips": 100}
