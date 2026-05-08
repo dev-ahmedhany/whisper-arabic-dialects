@@ -1,0 +1,5 @@
+{"dataset": "sada22-msa-min8s", "model": "whisper-large-v3", "strategy": "full", "wer": 0.36382292582820286, "rtf": 0.12867576433189667, "n_clips": 100}
+{"dataset": "sada22-msa-min8s", "model": "whisper-large-v3", "strategy": "fixed_30000_500", "wer": 0.3579595426561126, "rtf": 0.13285525705656212, "n_clips": 100}
+{"dataset": "sada22-msa-min8s", "model": "whisper-large-v3", "strategy": "fixed_20000_500", "wer": 0.3128114922310173, "rtf": 0.14363607482943824, "n_clips": 100}
+{"dataset": "sada22-msa-min8s", "model": "whisper-large-v3", "strategy": "fixed_15000_500", "wer": 0.29991204925241866, "rtf": 0.15131268619970697, "n_clips": 100}
+{"dataset": "sada22-msa-min8s", "model": "whisper-large-v3", "strategy": "fixed_11000_100", "wer": 0.3013778950454412, "rtf": 0.1516280177014807, "n_clips": 100}
