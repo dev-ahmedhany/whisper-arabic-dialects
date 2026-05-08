@@ -82,12 +82,14 @@ We measured all three of these effects.
 
 ## Findings
 
-### 1. The Pareto frontier (v2 fine-grid sweep, 93 configs)
+### 1. The WER leaderboard (v2 fine-grid sweep, 93 configs)
 
 After the v1 sweep flagged 10–12 s as the sweet spot, v2 ran a
 fine-grid 7–13 s in 500 ms steps × overlap {0, 100, 200, 300, 500,
-700, 1000} ms × ± leading-silence-trim. Top 12 strategies on
-everyayah (raw jsonl in [`results/kitchensink_v2.jsonl`](results/kitchensink_v2.jsonl)):
+700, 1000} ms × ± leading-silence-trim. Since this is offline
+transcription, WER is the only axis that matters (RTF stays in
+0.02–0.04 across all configs). Top 12 strategies on everyayah
+(raw jsonl in [`results/kitchensink_v2.jsonl`](results/kitchensink_v2.jsonl)):
 
 | strategy | WER | RTF |
 |---|---:|---:|
@@ -341,7 +343,7 @@ end-to-end recipe.
 
 | | status |
 |---|---|
-| Pareto frontier 1–12 s windows (v1) | ✅ done |
+| WER leaderboard 1–12 s windows (v1) | ✅ done |
 | Fine-grid 7–13 s × 7 overlaps (v2, 93 configs) | ✅ done — `fixed_11000_100` 10.99 % winner |
 | ChunkFormer / WhisperX context strategies (v3, 46 configs) | ✅ done — none beat v2 |
 | LocalAgreement-2 vs boundary-dedup | ✅ done |
