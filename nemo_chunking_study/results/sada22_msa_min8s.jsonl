@@ -1,0 +1,6 @@
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "full", "wer": 0.5042509527997655, "rtf": 0.0301690026258922, "n_clips": 100, "min_dur_s": 8.0}
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "fixed_11000_100", "wer": 0.1841102316036353, "rtf": 0.03444442040291659, "n_clips": 100, "min_dur_s": 8.0}
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "fixed_10500_100", "wer": 0.1861624157138669, "rtf": 0.03724820319914702, "n_clips": 100, "min_dur_s": 8.0}
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "fixed_10000_500", "wer": 0.20082087364409265, "rtf": 0.04044876440397298, "n_clips": 100, "min_dur_s": 8.0}
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "fixed_8000_500", "wer": 0.20932277924362358, "rtf": 0.0405116737790525, "n_clips": 100, "min_dur_s": 8.0}
+{"dataset": "badrex/arabic-speech-SADA22-MSA", "strategy": "fixed_4000_0", "wer": 0.27118147170917617, "rtf": 0.04764406300957295, "n_clips": 100, "min_dur_s": 8.0}

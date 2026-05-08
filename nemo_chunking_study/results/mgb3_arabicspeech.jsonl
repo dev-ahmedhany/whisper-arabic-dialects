@@ -1,0 +1,6 @@
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "full", "wer": 0.467697907188353, "rtf": 0.0360674467247178, "n_clips": 100}
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "fixed_11000_100", "wer": 0.46860782529572337, "rtf": 0.03550653957480507, "n_clips": 100}
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "fixed_10500_100", "wer": 0.46860782529572337, "rtf": 0.036218673232174356, "n_clips": 100}
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "fixed_10000_500", "wer": 0.46860782529572337, "rtf": 0.035930715100454515, "n_clips": 100}
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "fixed_8000_500", "wer": 0.4708826205641492, "rtf": 0.040618785336915784, "n_clips": 100}
+{"dataset": "ArabicSpeech/MGB-3", "strategy": "fixed_4000_0", "wer": 0.5222929936305732, "rtf": 0.04851998998732574, "n_clips": 100}
