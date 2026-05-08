@@ -113,11 +113,8 @@ for row in ds:
     if rec not in counts and len(counts) >= MAX_RECITERS: continue
     audio = row.get('audio')
     if audio is None: continue
-    sa = audio.get_all_samples()
-    arr = sa.data.numpy()
-    if arr.ndim > 1: arr = arr.mean(axis=0)
-    arr = np.asarray(arr, dtype='float32')
-    samples, sr = to16k(arr, sa.sample_rate)
+    arr = np.asarray(audio['array'], dtype='float32')
+    samples, sr = to16k(arr, audio['sampling_rate'])
     counts[rec] = counts.get(rec, 0) + 1
     everyayah.append({'samples': samples, 'sr': sr, 'subgroup': rec, 'ref': norm(row.get('text', ''))})
     if all(c >= PER_RECITER for c in counts.values()) and len(counts) >= MAX_RECITERS: break
@@ -133,11 +130,8 @@ try:
         audio = row.get('audio')
         sentence = row.get('sentence', '')
         if audio is None or not sentence: continue
-        sa = audio.get_all_samples()
-        arr = sa.data.numpy()
-        if arr.ndim > 1: arr = arr.mean(axis=0)
-        arr = np.asarray(arr, dtype='float32')
-        samples, sr = to16k(arr, sa.sample_rate)
+        arr = np.asarray(audio['array'], dtype='float32')
+        samples, sr = to16k(arr, audio['sampling_rate'])
         cv.append({'samples': samples, 'sr': sr, 'subgroup': 'cv-ar', 'ref': norm(sentence)})
     print(f'common_voice: {len(cv)} clips', flush=True)
 except Exception as e:

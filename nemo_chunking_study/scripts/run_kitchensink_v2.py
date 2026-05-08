@@ -103,7 +103,7 @@ def chunks_vad(samples, max_chunk_ms=None, do_trim=False, pad_ms=0):
         vad.accept_waveform(chunk)
         while not vad.empty():
             try:
-                seg = vad.front()
+                seg = vad.front if not callable(vad.front) else vad.front()
                 ss = seg.samples if not callable(getattr(seg, 'samples', None)) else seg.samples()
                 raw.append(np.asarray(ss, dtype='float32'))
             except Exception as e:
@@ -112,7 +112,7 @@ def chunks_vad(samples, max_chunk_ms=None, do_trim=False, pad_ms=0):
     vad.flush()
     while not vad.empty():
         try:
-            seg = vad.front()
+            seg = vad.front if not callable(vad.front) else vad.front()
             ss = seg.samples if not callable(getattr(seg, 'samples', None)) else seg.samples()
             raw.append(np.asarray(ss, dtype='float32'))
         except Exception:

@@ -1,8 +1,4 @@
-"""Whisper chunking grid — single model, both datasets, parameterized.
-
-Spawned in parallel across multiple VMs (one per Whisper variant) so the
-full study completes in one VM-budget instead of N×.
-"""
+"""Whisper chunking grid on GPU — same as run_whisper_grid.py but .to('cuda')."""
 from __future__ import annotations
 import argparse, gc, json, os, re, time, unicodedata
 import numpy as np, psutil, soundfile as sf, jiwer
@@ -32,30 +28,37 @@ def boundary_dedup(prev, new, max_n=5):
     return new
 
 ap = argparse.ArgumentParser()
-ap.add_argument('--model-id', required=True, help='HF model ID, e.g. openai/whisper-tiny')
-ap.add_argument('--model-name', required=True, help='short name for output JSON')
-ap.add_argument('--out', default='/tmp/results/whisper_grid.jsonl')
+ap.add_argument('--model-id', required=True)
+ap.add_argument('--model-name', required=True)
+ap.add_argument('--out', default='/tmp/results/whisper_grid_gpu.jsonl')
 args = ap.parse_args()
 
 print(f'--- load {args.model_name} ({args.model_id}) ---', flush=True)
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import torch
-torch.set_num_threads(4)
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DTYPE = torch.float16 if DEVICE == 'cuda' else torch.float32
+print(f'device: {DEVICE} dtype: {DTYPE}', flush=True)
+
 proc_obj = WhisperProcessor.from_pretrained(args.model_id)
-model = WhisperForConditionalGeneration.from_pretrained(args.model_id)
-getattr(model, 'eval')()
+model = WhisperForConditionalGeneration.from_pretrained(args.model_id, torch_dtype=DTYPE).to(DEVICE)
+model.eval()
 if hasattr(model.generation_config, 'language'):
     model.generation_config.language = 'arabic'
 if hasattr(model.generation_config, 'task'):
     model.generation_config.task = 'transcribe'
 print(f'{args.model_name} loaded', flush=True)
-proc = psutil.Process(os.getpid())
 
 def transcribe_chunk(samples, sr):
     inputs = proc_obj(samples, sampling_rate=sr, return_tensors='pt')
+    feats = inputs.input_features.to(DEVICE).to(DTYPE)
+    if DEVICE == 'cuda':
+        torch.cuda.synchronize()
     t0 = time.perf_counter()
     with torch.no_grad():
-        ids = model.generate(inputs.input_features, num_beams=1, do_sample=False, max_new_tokens=256)
+        ids = model.generate(feats, num_beams=1, do_sample=False, max_new_tokens=256)
+    if DEVICE == 'cuda':
+        torch.cuda.synchronize()
     dt = time.perf_counter() - t0
     text = proc_obj.batch_decode(ids, skip_special_tokens=True)[0]
     return norm(text), dt
@@ -101,7 +104,6 @@ def transcribe_all(clips, chunker_fn, dedup=True):
         'n_clips': len(refs),
     }
 
-# Datasets
 print('--- cache everyayah ---', flush=True)
 from datasets import load_dataset
 ds = load_dataset('tarteel-ai/everyayah', split='train', streaming=True, token=os.environ['HF_TOKEN'])
@@ -113,44 +115,16 @@ for row in ds:
     if rec not in counts and len(counts) >= MAX_RECITERS: continue
     audio = row.get('audio')
     if audio is None: continue
-    sa = audio.get_all_samples()
-    arr = sa.data.numpy()
-    if arr.ndim > 1: arr = arr.mean(axis=0)
-    arr = np.asarray(arr, dtype='float32')
-    samples, sr = to16k(arr, sa.sample_rate)
+    arr = np.asarray(audio['array'], dtype='float32')
+    samples, sr = to16k(arr, audio['sampling_rate'])
     counts[rec] = counts.get(rec, 0) + 1
     everyayah.append({'samples': samples, 'sr': sr, 'subgroup': rec, 'ref': norm(row.get('text', ''))})
     if all(c >= PER_RECITER for c in counts.values()) and len(counts) >= MAX_RECITERS: break
 print(f'everyayah: {len(everyayah)} clips', flush=True)
 
-print('--- cache common_voice_19 ---', flush=True)
-cv = []
-try:
-    ds = load_dataset('mozilla-foundation/common_voice_19_0', 'ar', split='test',
-                      streaming=True, token=os.environ['HF_TOKEN'])
-    for row in ds:
-        if len(cv) >= 150: break
-        audio = row.get('audio')
-        sentence = row.get('sentence', '')
-        if audio is None or not sentence: continue
-        sa = audio.get_all_samples()
-        arr = sa.data.numpy()
-        if arr.ndim > 1: arr = arr.mean(axis=0)
-        arr = np.asarray(arr, dtype='float32')
-        samples, sr = to16k(arr, sa.sample_rate)
-        cv.append({'samples': samples, 'sr': sr, 'subgroup': 'cv-ar', 'ref': norm(sentence)})
-    print(f'common_voice: {len(cv)} clips', flush=True)
-except Exception as e:
-    print(f'cv failed: {e}', flush=True)
+datasets = {'everyayah': everyayah}
 
-datasets = {}
-if cv: datasets['common_voice_19'] = cv
-if everyayah: datasets['everyayah'] = everyayah
-
-# Chunk grid (focused — Whisper has a 30s training ceiling and shouldn't
-# benefit from chunking the way NeMo does, but we test the same configs)
-strategies = []
-strategies.append(('full', lambda s: [s]))
+strategies = [('full', lambda s: [s])]
 for win in [4000, 8000, 10000, 12000, 15000, 20000, 30000]:
     for ov in [0, 500]:
         if ov >= win: continue
@@ -167,12 +141,9 @@ for ds_name, clips in datasets.items():
         gc.collect()
         try:
             res = transcribe_all(clips, fn)
-            res['strategy'] = name
-            res['dataset'] = ds_name
-            res['model'] = args.model_name
-            out_f.write(json.dumps(res, ensure_ascii=False) + '\n')
-            out_f.flush()
-            print(f'  WER={res["overall_wer"]:.4f} RTF={res["rtf"]:.3f} wps={res["words_per_sec"]:.1f} بسم={res["basmala_hallucinations"]}', flush=True)
+            res['strategy'] = name; res['dataset'] = ds_name; res['model'] = args.model_name
+            out_f.write(json.dumps(res, ensure_ascii=False) + '\n'); out_f.flush()
+            print(f'  WER={res["overall_wer"]:.4f} RTF={res["rtf"]:.4f} wps={res["words_per_sec"]:.1f} بسم={res["basmala_hallucinations"]}', flush=True)
         except Exception as e:
             print(f'  err: {e}', flush=True)
 out_f.close()

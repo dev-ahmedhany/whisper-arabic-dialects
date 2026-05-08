@@ -108,7 +108,7 @@ def vad_merge_chunks(samples, target_ms, right_ctx_ms=0):
         chunk = samples[i:i+block].copy()
         vad.accept_waveform(chunk)
         while not vad.empty():
-            seg = vad.front()
+            seg = vad.front if not callable(vad.front) else vad.front()
             try:
                 ss = seg.samples if not callable(getattr(seg, 'samples', None)) else seg.samples()
                 start = seg.start if hasattr(seg, 'start') else 0
@@ -118,7 +118,7 @@ def vad_merge_chunks(samples, target_ms, right_ctx_ms=0):
             vad.pop()
     vad.flush()
     while not vad.empty():
-        seg = vad.front()
+        seg = vad.front if not callable(vad.front) else vad.front()
         try:
             ss = seg.samples if not callable(getattr(seg, 'samples', None)) else seg.samples()
             start = seg.start if hasattr(seg, 'start') else 0
