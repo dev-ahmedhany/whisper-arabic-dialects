@@ -1,0 +1,12 @@
+Warning: Permanently added '49.13.211.232' (ED25519) to the list of known hosts.
+{
+  "cpu": "4 ARM cores (Hetzner cax21)",
+  "rss_peak_mib": 1116.43359375,
+  "rtf": 0.03261773566199997,
+  "realtime_factor": 30.6581673958751,
+  "hours_per_day": 735.7960175010024,
+  "hours_per_month": 22073.880525030072,
+  "cost_per_hour_audio_usd": 0.00036196626102691636,
+  "cost_per_min_audio_usd": 6.032771017115273e-06,
+  "n_runs": 50
+}
